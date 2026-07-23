@@ -1,0 +1,96 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+
+    container_name: pkspl-app
+
+    working_dir: /var/www/html
+
+    volumes:
+      - ./src:/var/www/html
+
+    depends_on:
+      - mysql
+
+    networks:
+      - pkspl-network
+
+  nginx:
+
+    image: nginx:latest
+
+    container_name: pkspl-nginx
+
+    ports:
+      - "8000:80"
+
+    volumes:
+      - ./src:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+
+    depends_on:
+      - app
+
+    networks:
+      - pkspl-network
+
+  mysql:
+
+    image: mysql:8.0
+
+    container_name: pkspl-mysql
+
+    restart: always
+
+    environment:
+
+      MYSQL_DATABASE: pkspl
+
+      MYSQL_ROOT_PASSWORD: root
+
+      MYSQL_USER: pkspl
+
+      MYSQL_PASSWORD: pkspl123
+
+    ports:
+      - "3306:3306"
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+    networks:
+      - pkspl-network
+
+  phpmyadmin:
+
+    image: phpmyadmin/phpmyadmin
+
+    container_name: pkspl-phpmyadmin
+
+    restart: always
+
+    ports:
+      - "8081:80"
+
+    environment:
+
+      PMA_HOST: mysql
+
+      MYSQL_ROOT_PASSWORD: root
+
+    depends_on:
+      - mysql
+
+    networks:
+      - pkspl-network
+
+volumes:
+
+  mysql-data:
+
+networks:
+
+  pkspl-network:
