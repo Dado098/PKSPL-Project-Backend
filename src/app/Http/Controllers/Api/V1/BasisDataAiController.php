@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Requests\BasisDataAiRequest;
+use App\Http\Resources\BasisDataAiResource;
+use App\Models\BasisDataAi;
+use Illuminate\Http\Request;
+
+class BasisDataAiController extends ApiResourceController
+{
+    protected string $model = BasisDataAi::class;
+    protected string $resource = BasisDataAiResource::class;
+
+    public function index(Request $request) { return $this->indexResource($request); }
+    public function store(BasisDataAiRequest $request) { return $this->storeResource($request->validated()); }
+    public function show(BasisDataAi $basisDataAi) { return $this->showResource($basisDataAi); }
+    public function update(BasisDataAiRequest $request, BasisDataAi $basisDataAi) { return $this->updateResource($basisDataAi, $request->validated()); }
+    public function destroy(BasisDataAi $basisDataAi) { return $this->destroyResource($basisDataAi); }
+}

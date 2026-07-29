@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Requests\AreaTerdampakRequest;
+use App\Http\Resources\AreaTerdampakResource;
+use App\Models\AreaTerdampak;
+use Illuminate\Http\Request;
+
+class AreaTerdampakController extends ApiResourceController
+{
+    protected string $model = AreaTerdampak::class;
+    protected string $resource = AreaTerdampakResource::class;
+
+    public function index(Request $request) { return $this->indexResource($request); }
+    public function store(AreaTerdampakRequest $request) { return $this->storeResource($request->validated()); }
+    public function show(AreaTerdampak $areaTerdampak) { return $this->showResource($areaTerdampak); }
+    public function update(AreaTerdampakRequest $request, AreaTerdampak $areaTerdampak) { return $this->updateResource($areaTerdampak, $request->validated()); }
+    public function destroy(AreaTerdampak $areaTerdampak) { return $this->destroyResource($areaTerdampak); }
+}
