@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * Pengguna aplikasi yang selalu terhubung ke satu role.
+ */
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -28,6 +31,9 @@ class User extends Authenticatable
         return 'id_user';
     }
 
+    /**
+     * Foreign key role menggunakan nama kolom custom pada schema.
+     */
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'id_role', 'id_role');
