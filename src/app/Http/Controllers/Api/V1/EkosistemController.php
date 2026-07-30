@@ -7,11 +7,13 @@ use App\Http\Resources\EkosistemResource;
 use App\Models\Ekosistem;
 use Illuminate\Http\Request;
 
+/** Menangani endpoint CRUD master ekosistem. */
 class EkosistemController extends ApiResourceController
 {
     protected string $model = Ekosistem::class;
     protected string $resource = EkosistemResource::class;
 
+    // Meneruskan operasi CRUD ke helper dengan request yang sudah tervalidasi.
     public function index(Request $request) { return $this->indexResource($request); }
     public function store(EkosistemRequest $request) { return $this->storeResource($request->validated()); }
     public function show(Ekosistem $ekosistem) { return $this->showResource($ekosistem); }

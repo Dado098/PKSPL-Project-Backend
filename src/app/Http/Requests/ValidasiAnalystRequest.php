@@ -5,10 +5,13 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/** Memvalidasi data validasi analyst dari request API. */
 class ValidasiAnalystRequest extends FormRequest
 {
+    /** Mengizinkan request karena otorisasi belum diterapkan. */
     public function authorize(): bool { return true; }
 
+    /** Menetapkan aturan validasi hasil valuasi oleh analyst. */
     public function rules(): array
     {
         $required = $this->isMethod('post') ? 'required' : 'sometimes';

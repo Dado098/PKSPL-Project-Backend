@@ -7,11 +7,13 @@ use App\Http\Resources\ProyekResource;
 use App\Models\Proyek;
 use Illuminate\Http\Request;
 
+/** Menangani endpoint CRUD proyek. */
 class ProyekController extends ApiResourceController
 {
     protected string $model = Proyek::class;
     protected string $resource = ProyekResource::class;
 
+    // Meneruskan operasi CRUD ke helper dengan request yang sudah tervalidasi.
     public function index(Request $request) { return $this->indexResource($request); }
     public function store(ProyekRequest $request) { return $this->storeResource($request->validated()); }
     public function show(Proyek $proyek) { return $this->showResource($proyek); }

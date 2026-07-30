@@ -4,12 +4,16 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/** Memvalidasi data area terdampak dari request API. */
 class AreaTerdampakRequest extends FormRequest
 {
+    /** Mengizinkan request karena otorisasi belum diterapkan. */
     public function authorize(): bool { return true; }
 
+    /** Menetapkan aturan validasi untuk pembuatan dan pembaruan area. */
     public function rules(): array
     {
+        // Menyesuaikan kolom wajib antara pembuatan dan pembaruan data.
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
 
         return [
