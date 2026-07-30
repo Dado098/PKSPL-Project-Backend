@@ -22,12 +22,37 @@ return new class extends Migration
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
 
-            // Informasi proyek
+            // Referensi wilayah proyek.
+            $table->foreignId('id_provinsi')
+                ->constrained('provinsi', 'id_provinsi')
+                ->cascadeOnUpdate()
+                ->restrictOnDelete();
+
+            $table->foreignId('id_kabupaten_kota')
+                ->constrained('kabupaten_kota', 'id_kabupaten_kota')
+                ->cascadeOnUpdate()
+                ->restrictOnDelete();
+
+            $table->foreignId('id_kecamatan')
+                ->constrained('kecamatan', 'id_kecamatan')
+                ->cascadeOnUpdate()
+                ->restrictOnDelete();
+
+            $table->foreignId('id_desa_kelurahan')
+                ->constrained('desa_kelurahan', 'id_desa_kelurahan')
+                ->cascadeOnUpdate()
+                ->restrictOnDelete();
+
+            // Informasi proyek.
             $table->string('nama_proyek', 150);
 
             $table->text('tujuan_valuasi');
 
-            $table->string('lokasi', 255);
+            $table->text('alamat_lengkap')->nullable();
+
+            $table->decimal('latitude', 10, 6)->nullable();
+
+            $table->decimal('longitude', 10, 6)->nullable();
 
             $table->year('tahun');
 
@@ -51,6 +76,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('proyek');
     }
 };

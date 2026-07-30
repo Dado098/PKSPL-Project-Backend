@@ -13,13 +13,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Role extends Model
 {
-    public const ADMIN = 'admin';
+    public const ADMIN = 'Admin';
 
-    public const ANALYST = 'analyst';
+    public const ANALYST = 'Analyst';
 
-    public const PENELITI = 'peneliti';
+    public const PENELITI = 'Peneliti';
 
-    public const GUEST = 'guest';
+    public const GUEST = 'Guest';
 
     /**
      * Primary key role tidak mengikuti konvensi default Eloquent.
