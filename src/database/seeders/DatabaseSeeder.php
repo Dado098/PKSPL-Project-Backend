@@ -14,7 +14,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Role harus tersedia sebelum user dibuat karena users.id_role wajib diisi.
-        $this->call(RoleSeeder::class);
+        // Urutan mengikuti seluruh dependensi foreign key pada schema aplikasi.
+        $this->call([
+            RoleSeeder::class,
+            UserSeeder::class,
+            ProvinsiSeeder::class,
+            KabupatenKotaSeeder::class,
+            KecamatanSeeder::class,
+            DesaKelurahanSeeder::class,
+            EkosistemSeeder::class,
+            MetodeValuasiSeeder::class,
+            ProyekSeeder::class,
+            AreaTerdampakSeeder::class,
+            ReferensiSeeder::class,
+            JasaEkosistemSeeder::class,
+            ProsesAnalisisSeeder::class,
+        ]);
     }
 }
