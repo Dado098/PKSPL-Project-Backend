@@ -19,8 +19,8 @@ use App\Http\Controllers\Api\V1\ValidasiAnalystController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
-    // Role adalah master data tetap dan hanya dapat dibaca melalui API.
-    Route::apiResource('roles', RoleController::class)->only(['index', 'show']);
+    // CRUD role dibatasi oleh RoleRequest pada empat nama role yang disepakati.
+    Route::apiResource('roles', RoleController::class);
     Route::apiResource('users', UserController::class);
     Route::apiResource('proyek', ProyekController::class);
     Route::apiResource('ekosistem', EkosistemController::class);
