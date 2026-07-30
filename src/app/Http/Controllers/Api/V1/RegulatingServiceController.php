@@ -7,11 +7,13 @@ use App\Http\Resources\RegulatingServiceResource;
 use App\Models\RegulatingService;
 use Illuminate\Http\Request;
 
+/** Menangani endpoint CRUD jasa pengaturan. */
 class RegulatingServiceController extends ApiResourceController
 {
     protected string $model = RegulatingService::class;
     protected string $resource = RegulatingServiceResource::class;
 
+    // Meneruskan operasi CRUD ke helper dengan request yang sudah tervalidasi.
     public function index(Request $request) { return $this->indexResource($request); }
     public function store(RegulatingServiceRequest $request) { return $this->storeResource($request->validated()); }
     public function show(RegulatingService $regulatingService) { return $this->showResource($regulatingService); }

@@ -7,11 +7,13 @@ use App\Http\Resources\ValidasiAnalystResource;
 use App\Models\ValidasiAnalyst;
 use Illuminate\Http\Request;
 
+/** Menangani endpoint CRUD validasi analyst. */
 class ValidasiAnalystController extends ApiResourceController
 {
     protected string $model = ValidasiAnalyst::class;
     protected string $resource = ValidasiAnalystResource::class;
 
+    // Meneruskan operasi CRUD ke helper dengan request yang sudah tervalidasi.
     public function index(Request $request) { return $this->indexResource($request); }
     public function store(ValidasiAnalystRequest $request) { return $this->storeResource($request->validated()); }
     public function show(ValidasiAnalyst $validasiAnalyst) { return $this->showResource($validasiAnalyst); }

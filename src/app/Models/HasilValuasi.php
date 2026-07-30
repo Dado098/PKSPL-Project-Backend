@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/** Menyimpan komponen Total Economic Value untuk suatu area. */
 class HasilValuasi extends Model
 {
     protected $table = 'hasil_valuasi';
     protected $primaryKey = 'id_hasil';
     protected $fillable = ['id_area', 'id_metode', 'direct_use_value', 'indirect_use_value', 'option_value', 'existence_value', 'bequest_value', 'tev', 'tanggal_hitung', 'keterangan'];
 
+    /** Mengubah komponen nilai dan tanggal hitung ke tipe data yang sesuai. */
     protected function casts(): array
     {
         return [
@@ -25,21 +27,25 @@ class HasilValuasi extends Model
         ];
     }
 
+    /** Menggunakan primary key schema untuk route model binding. */
     public function getRouteKeyName(): string
     {
         return 'id_hasil';
     }
 
+    /** Hasil valuasi terkait dengan satu area terdampak. */
     public function areaTerdampak(): BelongsTo
     {
         return $this->belongsTo(AreaTerdampak::class, 'id_area', 'id_area');
     }
 
+    /** Hasil valuasi menggunakan satu metode valuasi. */
     public function metodeValuasi(): BelongsTo
     {
         return $this->belongsTo(MetodeValuasi::class, 'id_metode', 'id_metode');
     }
 
+    /** Hasil valuasi dapat memiliki banyak validasi analyst. */
     public function validasiAnalyst(): HasMany
     {
         return $this->hasMany(ValidasiAnalyst::class, 'id_hasil', 'id_hasil');

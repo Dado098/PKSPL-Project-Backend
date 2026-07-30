@@ -5,13 +5,18 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/** Memvalidasi data pengguna dari request API. */
 class UserRequest extends FormRequest
 {
+    /** Mengizinkan request karena otorisasi belum diterapkan. */
     public function authorize(): bool { return true; }
 
+    /** Menetapkan aturan validasi pengguna. */
     public function rules(): array
     {
+        // Menyesuaikan kolom wajib antara pembuatan dan pembaruan data.
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
+        // Password hanya wajib saat pengguna baru dibuat.
         $password = $this->isMethod('post') ? 'required' : 'sometimes';
 
         return [
