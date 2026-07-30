@@ -8,9 +8,12 @@ use App\Http\Controllers\Api\V1\DatasetReferensiController;
 use App\Http\Controllers\Api\V1\EkosistemController;
 use App\Http\Controllers\Api\V1\HasilValuasiController;
 use App\Http\Controllers\Api\V1\HistoriController;
+use App\Http\Controllers\Api\V1\KabupatenKotaController;
+use App\Http\Controllers\Api\V1\KecamatanController;
 use App\Http\Controllers\Api\V1\MetodeValuasiController;
 use App\Http\Controllers\Api\V1\ProyekController;
 use App\Http\Controllers\Api\V1\ProvisioningServiceController;
+use App\Http\Controllers\Api\V1\ProvinsiController;
 use App\Http\Controllers\Api\V1\RegulatingServiceController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SupportingServiceController;
@@ -22,6 +25,9 @@ Route::prefix('v1')->group(function (): void {
     // CRUD role dibatasi oleh RoleRequest pada empat nama role yang disepakati.
     Route::apiResource('roles', RoleController::class);
     Route::apiResource('users', UserController::class);
+    Route::apiResource('provinsi', ProvinsiController::class);
+    Route::apiResource('kabupaten-kota', KabupatenKotaController::class)->parameters(['kabupaten-kota' => 'kabupatenKota']);
+    Route::apiResource('kecamatan', KecamatanController::class);
     Route::apiResource('proyek', ProyekController::class);
     Route::apiResource('ekosistem', EkosistemController::class);
     Route::apiResource('area-terdampak', AreaTerdampakController::class)->parameters(['area-terdampak' => 'areaTerdampak']);
