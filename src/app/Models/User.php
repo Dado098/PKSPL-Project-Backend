@@ -7,13 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * Pengguna aplikasi yang selalu terhubung ke satu role.
  */
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $primaryKey = 'id_user';
 
@@ -21,10 +22,12 @@ class User extends Authenticatable
 
     protected $hidden = ['password', 'remember_token', 'google_id'];
 
-    protected function casts(): array
-    {
-        return ['password' => 'hashed'];
-    }
+    /**
+     * Cast password field to hashed value automatically.
+     */
+    protected $casts = [
+        'password' => 'hashed',
+    ];
 
     public function getRouteKeyName(): string
     {
