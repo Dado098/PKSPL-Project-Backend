@@ -15,13 +15,30 @@ use App\Http\Controllers\Api\V1\ProyekController;
 use App\Http\Controllers\Api\V1\ProvisioningServiceController;
 use App\Http\Controllers\Api\V1\ProvinsiController;
 use App\Http\Controllers\Api\V1\RegulatingServiceController;
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SupportingServiceController;
+use App\Http\Controllers\Api\V1\TestController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\ValidasiAnalystController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
+    Route::get('auth/google/redirect', [AuthController::class, 'googleRedirect']);
+    Route::get('auth/google/callback', [AuthController::class, 'googleCallback']);
+    Route::post('auth/register', [AuthController::class, 'register']);
+    Route::post('auth/login', [AuthController::class, 'login']);
+    Route::middleware('auth:sanctum')->group(function (): void {
+        Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::get('auth/me', [AuthController::class, 'me']);
+    });
+
+    Route::prefix('test')->middleware(['auth:sanctum'])->group(function (): void {
+        Route::get('admin', [TestController::class, 'admin'])->middleware('role:Administrator');
+        Route::get('analyst', [TestController::class, 'analyst'])->middleware('role:Analyst');
+        Route::get('peneliti', [TestController::class, 'peneliti'])->middleware('role:Peneliti');
+        Route::get('guest', [TestController::class, 'guest'])->middleware('role:Guest');
+    });
     // CRUD role dibatasi oleh RoleRequest pada empat nama role yang disepakati.
     Route::apiResource('roles', RoleController::class);
     Route::apiResource('users', UserController::class);

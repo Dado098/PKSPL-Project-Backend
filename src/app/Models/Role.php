@@ -15,11 +15,25 @@ class Role extends Model
 {
     public const ADMIN = 'Admin';
 
+    public const ADMINISTRATOR = self::ADMIN;
+
     public const ANALYST = 'Analyst';
 
     public const PENELITI = 'Peneliti';
 
     public const GUEST = 'Guest';
+
+    /**
+     * Normalisasi nama role untuk memastikan alias seperti "Administrator"
+     * dapat dibandingkan dengan nama role yang tersimpan di database.
+     */
+    public static function normalize(string $role): string
+    {
+        return match (strtolower(trim($role))) {
+            'administrator' => self::ADMIN,
+            default => $role,
+        };
+    }
 
     /**
      * Primary key role tidak mengikuti konvensi default Eloquent.
