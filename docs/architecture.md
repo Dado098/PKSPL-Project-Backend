@@ -56,3 +56,4 @@ Untuk `GET` index, `ApiResourceController` memvalidasi `per_page` lalu menjalank
 - Route tidak menggunakan `auth`, policy, atau middleware peran; semua request yang lolos validasi dapat mengakses endpoint menurut implementasi saat ini.
 - Tidak terdapat perhitungan otomatis, transaction orchestration, audit otomatis, atau pemanggilan AI.
 - `analisis_ai` dan `histori` hanya memiliki `created_at`, dan endpoint keduanya tidak menawarkan update/delete.
+- Activity diagram TEV telah menetapkan alur bisnis yang diinginkan, tetapi formula, pemetaan empat jasa ekosistem ke lima komponen TEV, serta strategi penyimpanan TEV proyek masih menunggu persetujuan. Detail keputusan dicatat di `docs/workflow.md`.
