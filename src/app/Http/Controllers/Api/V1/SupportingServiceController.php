@@ -15,8 +15,8 @@ class SupportingServiceController extends ApiResourceController
 
     // Meneruskan operasi CRUD ke helper dengan request yang sudah tervalidasi.
     public function index(Request $request) { return $this->indexResource($request); }
-    public function store(SupportingServiceRequest $request) { return $this->storeResource($request->validated()); }
+    public function store(SupportingServiceRequest $request) { $payload = $request->validated(); $payload['kategori_tev'] = $payload['kategori_tev'] ?? 'OV'; return $this->storeResource($payload); }
     public function show(SupportingService $supportingService) { return $this->showResource($supportingService); }
-    public function update(SupportingServiceRequest $request, SupportingService $supportingService) { return $this->updateResource($supportingService, $request->validated()); }
+    public function update(SupportingServiceRequest $request, SupportingService $supportingService) { $payload = $request->validated(); $payload['kategori_tev'] = $payload['kategori_tev'] ?? 'OV'; return $this->updateResource($supportingService, $payload); }
     public function destroy(SupportingService $supportingService) { return $this->destroyResource($supportingService); }
 }

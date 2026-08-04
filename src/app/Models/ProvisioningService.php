@@ -10,7 +10,7 @@ class ProvisioningService extends Model
 {
     protected $table = 'provisioning_service';
     protected $primaryKey = 'id_provisioning';
-    protected $fillable = ['id_area', 'nama_objek', 'produktivitas', 'harga_pasar', 'luas_pemanfaatan', 'satuan_luas', 'referensi', 'nilai'];
+    protected $fillable = ['id_area', 'nama_objek', 'produktivitas', 'harga_pasar', 'luas_pemanfaatan', 'satuan_luas', 'referensi', 'nilai', 'kategori_tev', 'id_provinsi', 'id_kabupaten_kota', 'id_kecamatan', 'id_desa_kelurahan'];
 
     /** Mengubah nilai pengukuran jasa penyediaan ke presisi numerik. */
     protected function casts(): array
@@ -28,5 +28,25 @@ class ProvisioningService extends Model
     public function areaTerdampak(): BelongsTo
     {
         return $this->belongsTo(AreaTerdampak::class, 'id_area', 'id_area');
+    }
+
+    public function provinsi(): BelongsTo
+    {
+        return $this->belongsTo(Provinsi::class, 'id_provinsi', 'id_provinsi');
+    }
+
+    public function kabupatenKota(): BelongsTo
+    {
+        return $this->belongsTo(KabupatenKota::class, 'id_kabupaten_kota', 'id_kabupaten_kota');
+    }
+
+    public function kecamatan(): BelongsTo
+    {
+        return $this->belongsTo(Kecamatan::class, 'id_kecamatan', 'id_kecamatan');
+    }
+
+    public function desaKelurahan(): BelongsTo
+    {
+        return $this->belongsTo(DesaKelurahan::class, 'id_desa_kelurahan', 'id_desa_kelurahan');
     }
 }

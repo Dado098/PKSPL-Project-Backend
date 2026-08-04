@@ -24,6 +24,11 @@ class RegulatingServiceRequest extends FormRequest
             'nilai_indikator' => [$required, 'numeric', 'decimal:0,4'],
             'referensi' => ['nullable', 'string'],
             'nilai' => [$required, 'numeric', 'decimal:0,2'],
+            'kategori_tev' => ['nullable', 'sometimes', 'in:DUV,IUV,OV,EV,BV'],
+            'id_provinsi' => ['nullable', 'sometimes', 'integer', 'exists:provinsi,id_provinsi'],
+            'id_kabupaten_kota' => ['nullable', 'sometimes', 'integer', 'exists:kabupaten_kota,id_kabupaten_kota'],
+            'id_kecamatan' => ['nullable', 'sometimes', 'integer', 'exists:kecamatan,id_kecamatan'],
+            'id_desa_kelurahan' => ['nullable', 'sometimes', 'integer', 'exists:desa_kelurahan,id_desa_kelurahan'],
         ];
     }
 }
