@@ -5,7 +5,11 @@
 - PHP 8.3+
 - Composer
 - Node.js dan npm (untuk asset Vite)
+<<<<<<< HEAD
 - Driver database sesuai `.env` (PostgreSQL untuk Docker Compose; SQLite/PostgreSQL dapat dikonfigurasi Laravel)
+=======
+- Driver database sesuai `.env` (PostgreSQL/PostGIS untuk Docker Compose; SQLite/PostgreSQL dapat dikonfigurasi Laravel)
+>>>>>>> ff7df9ec17581839afda962a0b1dc955b278fcac
 - Ekstensi PHP Laravel umum, termasuk PDO dan driver database yang dipilih
 
 ## Instalasi lokal
@@ -39,7 +43,11 @@ Dari root `PKSPL-Project-Backend/`:
 docker compose up --build
 ```
 
+<<<<<<< HEAD
 Service yang dibawa compose: PHP app, Nginx (`localhost:8000`), PostgreSQL 15 (`localhost:5432`), dan pgAdmin (`localhost:8081`). Volume source mengarah ke `./src`; dependency PHP/konfigurasi aplikasi tetap perlu disiapkan sesuai langkah lokal bila image belum menyediakannya.
+=======
+Service yang dibawa compose: PHP app, Nginx (`localhost:8000`), PostgreSQL + PostGIS (`localhost:5433`), dan Adminer (`localhost:8081`). Volume source mengarah ke `./src`; dependency PHP/konfigurasi aplikasi tetap perlu disiapkan sesuai langkah lokal bila image belum menyediakannya.
+>>>>>>> ff7df9ec17581839afda962a0b1dc955b278fcac
 
 ## Test
 
