@@ -13,7 +13,8 @@ services:
       - ./src:/var/www/html
 
     depends_on:
-      - mysql
+      postgres:
+        condition: service_healthy
 
     command: sh -c "chmod -R 0777 /var/www/html/storage /var/www/html/bootstrap/cache && php-fpm"
 
@@ -39,59 +40,64 @@ services:
     networks:
       - pkspl-network
 
-  mysql:
+  postgres:
 
-    image: mysql:8.0
+    image: postgis/postgis:16-3.4
 
-    container_name: pkspl-mysql
+    container_name: pkspl-postgres
 
     restart: always
 
     environment:
 
-      MYSQL_DATABASE: pkspl
+      POSTGRES_DB: pkspl
 
-      MYSQL_ROOT_PASSWORD: root
+      POSTGRES_USER: pkspl
 
-      MYSQL_USER: pkspl
-
-      MYSQL_PASSWORD: pkspl123
+      POSTGRES_PASSWORD: pkspl123
 
     ports:
-      - "3306:3306"
+      - "5433:5432"
 
     volumes:
-      - mysql-data:/var/lib/mysql
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
 
     networks:
       - pkspl-network
 
-  phpmyadmin:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pkspl -d pkspl"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-    image: phpmyadmin/phpmyadmin
+  adminer:
 
-    container_name: pkspl-phpmyadmin
+    image: adminer:latest
+
+    container_name: pkspl-adminer
 
     restart: always
 
     ports:
-      - "8081:80"
+      - "8081:8080"
 
     environment:
 
-      PMA_HOST: mysql
-
-      MYSQL_ROOT_PASSWORD: root
+      ADMINER_DEFAULT_SERVER: postgres
 
     depends_on:
-      - mysql
+      postgres:
+        condition: service_healthy
 
     networks:
       - pkspl-network
 
 volumes:
 
-  mysql-data:
+  postgres-data:
 
 networks:
 

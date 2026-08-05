@@ -10,7 +10,7 @@ Run these prompts in this order: `00_Architecture.md`, `02_Docker_Setup.md`, `01
 
 ## Fixed technical standards
 
-- Laravel 12 API-only backend, PHP 8.3, MySQL 8, Nginx, phpMyAdmin, and Docker Compose.
+- Laravel 12 API-only backend, PHP 8.3, PostgreSQL 16 + PostGIS, Nginx, Adminer, and Docker Compose.
 - API base path: `/api/v1`.
 - PSR-12, Laravel Pint, PHPStan/Larastan, PHPUnit feature tests.
 - Use Controllers, Form Requests, API Resources, Services, Repository interfaces/implementations, DTOs for service input, Policies, and a dedicated service provider for bindings.
