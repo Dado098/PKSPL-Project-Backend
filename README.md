@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <<<<<<< ours
 # Valuasi Ekonomi
 
@@ -198,6 +199,8 @@ php artisan test
 PKSPL IPB
 Proyek ini menggunakan lisensi [MIT](https://opensource.org/licenses/MIT).
 =======
+=======
+>>>>>>> ff7df9ec17581839afda962a0b1dc955b278fcac
 # PKSPL Project Backend
 
 Backend REST API untuk pencatatan proyek, area terdampak, jasa ekosistem, hasil valuasi, data referensi/AI, validasi analyst, dan histori pada PKSPL. Implementasi saat ini berfokus pada penyimpanan dan pengelolaan data melalui Laravel API v1.
@@ -206,13 +209,17 @@ Backend REST API untuk pencatatan proyek, area terdampak, jasa ekosistem, hasil 
 
 Menyediakan fondasi API terstruktur bagi proses valuasi jasa ekosistem dan Total Economic Value (TEV): proyek memiliki area terdampak, area memiliki catatan jasa ekosistem, dan hasil valuasi dapat divalidasi serta dicatat historinya.
 
-> Status implementasi: API menyediakan CRUD dan validasi data. Formula perhitungan `nilai` jasa, TEV area/proyek, autentikasi, otorisasi, dan integrasi provider AI belum terdapat pada source code saat ini.
+> Status implementasi: API menyediakan CRUD dan validasi data. Formula perhitungan nilai jasa, TEV area/proyek, autentikasi, otorisasi, dan integrasi provider AI belum terdapat pada source code saat ini.
 
 ## Teknologi
 
 - PHP ^8.3 dan Laravel ^13.8
 - Eloquent ORM, Form Request, dan API Resource
+<<<<<<< HEAD
 - PostgreSQL 15 melalui Docker Compose (konfigurasi aplikasi tetap dapat diarahkan dengan `.env`)
+=======
+- PostgreSQL 16 + PostGIS melalui Docker Compose (konfigurasi aplikasi tetap dapat diarahkan dengan `.env`)
+>>>>>>> ff7df9ec17581839afda962a0b1dc955b278fcac
 - Vite, Tailwind CSS 4, dan PHPUnit
 
 ## Struktur utama
@@ -220,7 +227,11 @@ Menyediakan fondasi API terstruktur bagi proses valuasi jasa ekosistem dan Total
 ```text
 .
 ├── docker/                  # Dockerfile PHP dan konfigurasi Nginx
+<<<<<<< HEAD
 ├── docker-compose.yml       # App, Nginx, PostgreSQL, pgAdmin
+=======
+├── docker-compose.yml       # App, Nginx, PostgreSQL/PostGIS, Adminer
+>>>>>>> ff7df9ec17581839afda962a0b1dc955b278fcac
 ├── docs/                    # Dokumentasi proyek dan prompt historis
 └── src/                     # Aplikasi Laravel
     ├── app/Http/            # Controller API, Form Request, API Resource
@@ -242,7 +253,11 @@ php artisan migrate --seed
 php artisan serve
 ```
 
+<<<<<<< HEAD
 Untuk Docker, jalankan `docker compose up --build` dari root proyek. Nginx tersedia pada `http://localhost:8000` dan pgAdmin pada `http://localhost:8081`.
+=======
+Untuk Docker, jalankan `docker compose up --build` dari root proyek. Nginx tersedia pada `http://localhost:8000` dan Adminer pada `http://localhost:8081`. PostgreSQL tersedia pada `localhost:5433` jika Anda perlu koneksi dari host.
+>>>>>>> ff7df9ec17581839afda962a0b1dc955b278fcac
 
 ## Dokumentasi
 
@@ -260,5 +275,4 @@ Untuk Docker, jalankan `docker compose up --build` dari root proyek. Nginx terse
 
 ## Kontributor
 
-Kontributor individual tidak tercantum dalam source code atau metadata repository yang dianalisis. Lisensi/proyek menyebut **PKSPL IPB**.
->>>>>>> theirs
+Kontributor individual tidak tercantum dalam source code atau metadata repository yang dianalisis. Lisensi/proyek menyebut PKSPL IPB.

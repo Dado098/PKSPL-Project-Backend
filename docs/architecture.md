@@ -20,7 +20,11 @@ Tidak ada folder/kelas Service, Repository, DTO, Policy, atau middleware role ya
 PKSPL-Project-Backend/
 ├── docker/                         Dockerfile PHP dan virtual host Nginx
 ├── docs/                           Dokumentasi proyek
+<<<<<<< HEAD
 ├── docker-compose.yml              Environment PostgreSQL lokal
+=======
+├── docker-compose.yml              Environment PostgreSQL/PostGIS lokal
+>>>>>>> ff7df9ec17581839afda962a0b1dc955b278fcac
 └── src/
     ├── app/Http/Controllers/Api/V1 API resource controller dan controller domain
     ├── app/Http/Requests           Validasi payload
@@ -43,7 +47,11 @@ flowchart LR
     CT --> FR[Form Request\nvalidasi]
     FR --> AR[ApiResourceController]
     AR --> M[Eloquent Model]
+<<<<<<< HEAD
     M --> DB[(PostgreSQL/database)]
+=======
+    M --> DB[(PostgreSQL/PostGIS/database)]
+>>>>>>> ff7df9ec17581839afda962a0b1dc955b278fcac
     DB --> M
     M --> RES[API Resource]
     RES --> J[JSON response]
