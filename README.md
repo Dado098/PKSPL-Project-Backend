@@ -45,7 +45,7 @@ Aplikasi web berbasis Laravel untuk melakukan **valuasi ekonomi (economic valuat
 
 - **Backend**: [Laravel 13](https://laravel.com) (PHP ^8.3)
 - **Frontend**: Blade templates, [Tailwind CSS 4](https://tailwindcss.com), [Vite](https://vitejs.dev)
-- **Database**: SQLite (default), dapat dikonfigurasi ke MySQL/PostgreSQL
+- **Database**: SQLite (default), dapat dikonfigurasi ke PostgreSQL
 - **PDF Export**: [barryvdh/laravel-dompdf](https://github.com/barryvdh/laravel-dompdf)
 - **Testing**: PHPUnit
 - **Dev Tools**: Laravel Pint (code style), Laravel Pail (log viewer)
@@ -212,7 +212,7 @@ Menyediakan fondasi API terstruktur bagi proses valuasi jasa ekosistem dan Total
 
 - PHP ^8.3 dan Laravel ^13.8
 - Eloquent ORM, Form Request, dan API Resource
-- MySQL 8.0 melalui Docker Compose (konfigurasi aplikasi tetap dapat diarahkan dengan `.env`)
+- PostgreSQL 15 melalui Docker Compose (konfigurasi aplikasi tetap dapat diarahkan dengan `.env`)
 - Vite, Tailwind CSS 4, dan PHPUnit
 
 ## Struktur utama
@@ -220,7 +220,7 @@ Menyediakan fondasi API terstruktur bagi proses valuasi jasa ekosistem dan Total
 ```text
 .
 ├── docker/                  # Dockerfile PHP dan konfigurasi Nginx
-├── docker-compose.yml       # App, Nginx, MySQL, phpMyAdmin
+├── docker-compose.yml       # App, Nginx, PostgreSQL, pgAdmin
 ├── docs/                    # Dokumentasi proyek dan prompt historis
 └── src/                     # Aplikasi Laravel
     ├── app/Http/            # Controller API, Form Request, API Resource
@@ -242,7 +242,7 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-Untuk Docker, jalankan `docker compose up --build` dari root proyek. Nginx tersedia pada `http://localhost:8000` dan phpMyAdmin pada `http://localhost:8081`.
+Untuk Docker, jalankan `docker compose up --build` dari root proyek. Nginx tersedia pada `http://localhost:8000` dan pgAdmin pada `http://localhost:8081`.
 
 ## Dokumentasi
 

@@ -13,7 +13,7 @@ Create a Laravel 12 application in `src/` if one does not exist. If Laravel alre
 - Install and configure only the packages required by the approved architecture: JWT authentication, Google OAuth via Laravel Socialite, Swagger/OpenAPI, Pint, PHPStan/Larastan, and PHPUnit support. Before installing each package, verify current Laravel 12/PHP 8.3 compatibility in official package documentation.
 - Do not configure a second authentication mechanism such as Sanctum unless it is required by a selected package or explicitly approved.
 - Add the folder structure described in `00_Architecture.md` only as concrete classes are created; do not commit empty placeholder directories.
-- Configure `.env.example` with non-secret Docker service hostnames (`DB_HOST=mysql`, etc.) and placeholder OAuth/JWT values. Never commit real secrets.
+- Configure `.env.example` with non-secret Docker service hostnames (`DB_HOST=postgres`, etc.) and placeholder OAuth/JWT values. Never commit real secrets.
 - Add a short README section covering prerequisites, first-time install, container commands, and the API base URL. Docker-specific detail belongs to `02_Docker_Setup.md`.
 - Configure Pint and PHPStan at a strictness level that passes the project without suppressing real errors. Do not add blanket ignore rules.
 
