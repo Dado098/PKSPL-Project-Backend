@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SupportingServiceController;
 use App\Http\Controllers\Api\V1\TestController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\AIController;
 use App\Http\Controllers\Api\V1\ValidasiAnalystController;
 use Illuminate\Support\Facades\Route;
 
@@ -59,4 +60,12 @@ Route::prefix('v1')->group(function (): void {
     Route::apiResource('analisis-ai', AnalisisAiController::class)->only(['index', 'store', 'show'])->parameters(['analisis-ai' => 'analisisAi']);
     Route::apiResource('histori', HistoriController::class)->only(['index', 'store', 'show']);
     Route::apiResource('validasi-analyst', ValidasiAnalystController::class)->parameters(['validasi-analyst' => 'validasiAnalyst']);
+
+    Route::middleware(['auth:sanctum','role:Admin,Analyst,Peneliti'])
+        ->prefix('ai')
+        ->group(function (): void {
+            Route::get('/test', [AIController::class, 'test']);
+            Route::post('/health', [AIController::class, 'health']);
+            Route::post('/generate', [AIController::class, 'generate']);
+        });
 });
