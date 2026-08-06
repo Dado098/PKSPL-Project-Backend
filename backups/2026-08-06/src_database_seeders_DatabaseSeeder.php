@@ -29,8 +29,6 @@ class DatabaseSeeder extends Seeder
             ReferensiSeeder::class,
             JasaEkosistemSeeder::class,
             ProsesAnalisisSeeder::class,
-            // Review & Discussion Module (additive)
-            ReviewSeeder::class,
         ]);
     }
 }

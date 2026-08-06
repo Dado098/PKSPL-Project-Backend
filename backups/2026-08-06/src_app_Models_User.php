@@ -61,21 +61,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(ValidasiAnalyst::class, 'id_user', 'id_user');
     }
-
-    // ===== Review & Discussion Module (additive) =====
-
-    public function reviews(): HasMany
-    {
-        return $this->hasMany(Review::class, 'id_reviewer', 'id_user');
-    }
-
-    public function reviewComments(): HasMany
-    {
-        return $this->hasMany(ReviewComment::class, 'id_user', 'id_user');
-    }
-
-    public function activityLogs(): HasMany
-    {
-        return $this->hasMany(ActivityLog::class, 'id_user', 'id_user');
-    }
 }

@@ -69,6 +69,3 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/generate', [AIController::class, 'generate']);
         });
 });
-
-// ===== Review & Discussion Module (additive — do not remove the above routes) =====
-require __DIR__ . '/api_review.php';
