@@ -17,7 +17,7 @@ class CulturalServiceRequest extends FormRequest
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
 
         return [
-            'id_area' => [$required, 'integer', 'exists:area_terdampak,id_area'],
+            'id_jenis_tutupan_lahan' => [$required, 'integer', 'exists:jenis_tutupan_lahan,id_jenis_tutupan_lahan'],
             'nama_aktivitas' => [$required, 'string', 'max:150'],
             'jumlah_pengunjung' => [$required, 'numeric', 'decimal:0,2'],
             'biaya_perjalanan' => [$required, 'numeric', 'decimal:0,2'],

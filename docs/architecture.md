@@ -20,11 +20,7 @@ Tidak ada folder/kelas Service, Repository, DTO, Policy, atau middleware role ya
 PKSPL-Project-Backend/
 ├── docker/                         Dockerfile PHP dan virtual host Nginx
 ├── docs/                           Dokumentasi proyek
-<<<<<<< HEAD
-├── docker-compose.yml              Environment PostgreSQL lokal
-=======
 ├── docker-compose.yml              Environment PostgreSQL/PostGIS lokal
->>>>>>> ff7df9ec17581839afda962a0b1dc955b278fcac
 └── src/
     ├── app/Http/Controllers/Api/V1 API resource controller dan controller domain
     ├── app/Http/Requests           Validasi payload
@@ -47,11 +43,7 @@ flowchart LR
     CT --> FR[Form Request\nvalidasi]
     FR --> AR[ApiResourceController]
     AR --> M[Eloquent Model]
-<<<<<<< HEAD
-    M --> DB[(PostgreSQL/database)]
-=======
     M --> DB[(PostgreSQL/PostGIS/database)]
->>>>>>> ff7df9ec17581839afda962a0b1dc955b278fcac
     DB --> M
     M --> RES[API Resource]
     RES --> J[JSON response]
@@ -64,4 +56,6 @@ Untuk `GET` index, `ApiResourceController` memvalidasi `per_page` lalu menjalank
 - Route tidak menggunakan `auth`, policy, atau middleware peran; semua request yang lolos validasi dapat mengakses endpoint menurut implementasi saat ini.
 - Tidak terdapat perhitungan otomatis, transaction orchestration, audit otomatis, atau pemanggilan AI.
 - `analisis_ai` dan `histori` hanya memiliki `created_at`, dan endpoint keduanya tidak menawarkan update/delete.
+- Valuasi memakai hierarki `proyek → indexes → jenis_tutupan_lahan`. Service dan hasil valuasi terkait ke jenis tutupan lahan; agregasi dashboard dilakukan oleh `ProjectDashboardService` melalui calculation service.
+- Batas geometri proyek, index, dan tutupan lahan dikirim sebagai GeoJSON pada kolom JSON. Komponen SHP/SHX/DBF/PRJ/ZIP disimpan oleh `ShapefileUploadService`; parsing belum diimplementasikan.
 - Activity diagram TEV telah menetapkan alur bisnis yang diinginkan, tetapi formula, pemetaan empat jasa ekosistem ke lima komponen TEV, serta strategi penyimpanan TEV proyek masih menunggu persetujuan. Detail keputusan dicatat di `docs/workflow.md`.

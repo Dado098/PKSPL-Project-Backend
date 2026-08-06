@@ -17,7 +17,7 @@ class RegulatingServiceRequest extends FormRequest
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
 
         return [
-            'id_area' => [$required, 'integer', 'exists:area_terdampak,id_area'],
+            'id_jenis_tutupan_lahan' => [$required, 'integer', 'exists:jenis_tutupan_lahan,id_jenis_tutupan_lahan'],
             'jenis_regulating' => [$required, 'string', 'max:150'],
             'indikator' => [$required, 'string', 'max:150'],
             'satuan' => [$required, 'string', 'max:50'],

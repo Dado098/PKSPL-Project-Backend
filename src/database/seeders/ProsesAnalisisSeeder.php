@@ -15,9 +15,9 @@ class ProsesAnalisisSeeder extends Seeder
         $peneliti = DB::table('users')->where('email', 'peneliti@pkspl.test')->value('id_user');
         $metode = DB::table('metode_valuasi')->where('nama_metode', 'Harga Pasar')->value('id_metode');
 
-        foreach (DB::table('area_terdampak')->get() as $area) {
-            DB::table('hasil_valuasi')->updateOrInsert(['id_area' => $area->id_area, 'id_metode' => $metode], ['direct_use_value' => 218750, 'indirect_use_value' => 150000000, 'option_value' => 25000000, 'existence_value' => 50000000, 'bequest_value' => 15000000, 'tev' => 240218750, 'tanggal_hitung' => now(), 'keterangan' => 'Nilai contoh berdasarkan data seeder.']);
-            $hasil = DB::table('hasil_valuasi')->where('id_area', $area->id_area)->where('id_metode', $metode)->value('id_hasil');
+        foreach (DB::table('jenis_tutupan_lahan')->get() as $tutupanLahan) {
+            DB::table('hasil_valuasi')->updateOrInsert(['id_jenis_tutupan_lahan' => $tutupanLahan->id_jenis_tutupan_lahan, 'id_metode' => $metode], ['direct_use_value' => 218750, 'indirect_use_value' => 150000000, 'option_value' => 25000000, 'existence_value' => 50000000, 'bequest_value' => 15000000, 'tev' => 240218750, 'tanggal_hitung' => now(), 'keterangan' => 'Nilai contoh berdasarkan data seeder.']);
+            $hasil = DB::table('hasil_valuasi')->where('id_jenis_tutupan_lahan', $tutupanLahan->id_jenis_tutupan_lahan)->where('id_metode', $metode)->value('id_hasil');
             DB::table('validasi_analyst')->updateOrInsert(['id_hasil' => $hasil, 'id_user' => $analyst], ['status_validasi' => 'Valid', 'metode_analisis' => 'Manual', 'catatan' => 'Data contoh telah diperiksa analyst.', 'tanggal_validasi' => now()]);
         }
 

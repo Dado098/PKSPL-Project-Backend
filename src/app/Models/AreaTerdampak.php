@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** Menyimpan area ekosistem yang terdampak oleh proyek. */
 class AreaTerdampak extends Model
@@ -37,33 +36,4 @@ class AreaTerdampak extends Model
         return $this->belongsTo(Ekosistem::class, 'id_ekosistem', 'id_ekosistem');
     }
 
-    /** Area terdampak memiliki banyak jasa penyediaan. */
-    public function provisioningServices(): HasMany
-    {
-        return $this->hasMany(ProvisioningService::class, 'id_area', 'id_area');
-    }
-
-    /** Area terdampak memiliki banyak jasa pengaturan. */
-    public function regulatingServices(): HasMany
-    {
-        return $this->hasMany(RegulatingService::class, 'id_area', 'id_area');
-    }
-
-    /** Area terdampak memiliki banyak jasa pendukung. */
-    public function supportingServices(): HasMany
-    {
-        return $this->hasMany(SupportingService::class, 'id_area', 'id_area');
-    }
-
-    /** Area terdampak memiliki banyak jasa budaya. */
-    public function culturalServices(): HasMany
-    {
-        return $this->hasMany(CulturalService::class, 'id_area', 'id_area');
-    }
-
-    /** Area terdampak memiliki banyak hasil valuasi. */
-    public function hasilValuasi(): HasMany
-    {
-        return $this->hasMany(HasilValuasi::class, 'id_area', 'id_area');
-    }
 }

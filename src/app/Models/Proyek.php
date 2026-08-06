@@ -23,6 +23,10 @@ class Proyek extends Model
         'alamat_lengkap',
         'latitude',
         'longitude',
+        'luas',
+        'satuan_luas',
+        'geometry',
+        'shapefile_files',
         'tahun',
         'deskripsi',
         'status',
@@ -34,6 +38,9 @@ class Proyek extends Model
             'tahun' => 'integer',
             'latitude' => 'decimal:6',
             'longitude' => 'decimal:6',
+            'luas' => 'decimal:2',
+            'geometry' => 'array',
+            'shapefile_files' => 'array',
         ];
     }
 
@@ -82,6 +89,11 @@ class Proyek extends Model
     public function areaTerdampak(): HasMany
     {
         return $this->hasMany(AreaTerdampak::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function indexes(): HasMany
+    {
+        return $this->hasMany(Index::class, 'id_proyek', 'id_proyek');
     }
 
     public function analisisAi(): HasMany

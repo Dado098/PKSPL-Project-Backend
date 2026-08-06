@@ -17,7 +17,7 @@ class ProvisioningServiceRequest extends FormRequest
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
 
         return [
-            'id_area' => [$required, 'integer', 'exists:area_terdampak,id_area'],
+            'id_jenis_tutupan_lahan' => [$required, 'integer', 'exists:jenis_tutupan_lahan,id_jenis_tutupan_lahan'],
             'nama_objek' => [$required, 'string', 'max:150'],
             'produktivitas' => [$required, 'numeric', 'decimal:0,4'],
             'harga_pasar' => [$required, 'numeric', 'decimal:0,2'],

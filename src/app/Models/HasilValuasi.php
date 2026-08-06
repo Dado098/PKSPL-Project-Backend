@@ -11,7 +11,7 @@ class HasilValuasi extends Model
 {
     protected $table = 'hasil_valuasi';
     protected $primaryKey = 'id_hasil';
-    protected $fillable = ['id_area', 'id_metode', 'direct_use_value', 'indirect_use_value', 'option_value', 'existence_value', 'bequest_value', 'tev', 'tanggal_hitung', 'keterangan'];
+    protected $fillable = ['id_jenis_tutupan_lahan', 'id_metode', 'direct_use_value', 'indirect_use_value', 'option_value', 'existence_value', 'bequest_value', 'tev', 'tanggal_hitung', 'keterangan'];
 
     /** Mengubah komponen nilai dan tanggal hitung ke tipe data yang sesuai. */
     protected function casts(): array
@@ -33,10 +33,10 @@ class HasilValuasi extends Model
         return 'id_hasil';
     }
 
-    /** Hasil valuasi terkait dengan satu area terdampak. */
-    public function areaTerdampak(): BelongsTo
+    /** Hasil valuasi terkait dengan satu jenis tutupan lahan. */
+    public function jenisTutupanLahan(): BelongsTo
     {
-        return $this->belongsTo(AreaTerdampak::class, 'id_area', 'id_area');
+        return $this->belongsTo(JenisTutupanLahan::class, 'id_jenis_tutupan_lahan', 'id_jenis_tutupan_lahan');
     }
 
     /** Hasil valuasi menggunakan satu metode valuasi. */

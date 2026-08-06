@@ -10,7 +10,7 @@ class CulturalService extends Model
 {
     protected $table = 'cultural_service';
     protected $primaryKey = 'id_cultural';
-    protected $fillable = ['id_area', 'nama_aktivitas', 'jumlah_pengunjung', 'biaya_perjalanan', 'frekuensi', 'referensi', 'nilai', 'kategori_tev', 'id_provinsi', 'id_kabupaten_kota', 'id_kecamatan', 'id_desa_kelurahan'];
+    protected $fillable = ['id_jenis_tutupan_lahan', 'nama_aktivitas', 'jumlah_pengunjung', 'biaya_perjalanan', 'frekuensi', 'referensi', 'nilai', 'kategori_tev', 'id_provinsi', 'id_kabupaten_kota', 'id_kecamatan', 'id_desa_kelurahan'];
 
     /** Mengubah nilai pengukuran jasa budaya ke presisi numerik. */
     protected function casts(): array
@@ -24,10 +24,10 @@ class CulturalService extends Model
         return 'id_cultural';
     }
 
-    /** Jasa budaya terkait dengan satu area terdampak. */
-    public function areaTerdampak(): BelongsTo
+    /** Jasa budaya terkait dengan satu jenis tutupan lahan. */
+    public function jenisTutupanLahan(): BelongsTo
     {
-        return $this->belongsTo(AreaTerdampak::class, 'id_area', 'id_area');
+        return $this->belongsTo(JenisTutupanLahan::class, 'id_jenis_tutupan_lahan', 'id_jenis_tutupan_lahan');
     }
 
     public function provinsi(): BelongsTo

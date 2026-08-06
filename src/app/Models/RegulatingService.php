@@ -10,7 +10,7 @@ class RegulatingService extends Model
 {
     protected $table = 'regulating_service';
     protected $primaryKey = 'id_regulating';
-    protected $fillable = ['id_area', 'jenis_regulating', 'indikator', 'satuan', 'nilai_indikator', 'referensi', 'nilai', 'kategori_tev', 'id_provinsi', 'id_kabupaten_kota', 'id_kecamatan', 'id_desa_kelurahan'];
+    protected $fillable = ['id_jenis_tutupan_lahan', 'jenis_regulating', 'indikator', 'satuan', 'nilai_indikator', 'referensi', 'nilai', 'kategori_tev', 'id_provinsi', 'id_kabupaten_kota', 'id_kecamatan', 'id_desa_kelurahan'];
 
     /** Mengubah nilai indikator dan ekonomi ke presisi numerik. */
     protected function casts(): array
@@ -24,10 +24,10 @@ class RegulatingService extends Model
         return 'id_regulating';
     }
 
-    /** Jasa pengaturan terkait dengan satu area terdampak. */
-    public function areaTerdampak(): BelongsTo
+    /** Jasa pengaturan terkait dengan satu jenis tutupan lahan. */
+    public function jenisTutupanLahan(): BelongsTo
     {
-        return $this->belongsTo(AreaTerdampak::class, 'id_area', 'id_area');
+        return $this->belongsTo(JenisTutupanLahan::class, 'id_jenis_tutupan_lahan', 'id_jenis_tutupan_lahan');
     }
 
     public function provinsi(): BelongsTo
