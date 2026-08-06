@@ -93,4 +93,11 @@ class Proyek extends Model
     {
         return $this->hasMany(Histori::class, 'id_proyek', 'id_proyek');
     }
+
+    // ===== Review & Discussion Module (additive) =====
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class, 'id_proyek', 'id_proyek');
+    }
 }
