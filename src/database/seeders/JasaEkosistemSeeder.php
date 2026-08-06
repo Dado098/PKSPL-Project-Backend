@@ -5,15 +5,19 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-/** Mengisi contoh jasa ekosistem untuk setiap area terdampak. */
+/** Mengisi contoh jasa ekosistem untuk setiap jenis tutupan lahan. */
 class JasaEkosistemSeeder extends Seeder
 {
     public function run(): void
     {
-        $areas = DB::table('area_terdampak')->orderBy('id_area')->get();
+        $jenisTutupanLahan = DB::table('jenis_tutupan_lahan')->orderBy('id_jenis_tutupan_lahan')->get();
 
-        foreach ($areas as $area) {
-            $proyek = DB::table('proyek')->where('id_proyek', $area->id_proyek)->first();
+        foreach ($jenisTutupanLahan as $tutupanLahan) {
+            $proyek = DB::table('indexes')
+                ->join('proyek', 'proyek.id_proyek', '=', 'indexes.id_proyek')
+                ->where('indexes.id_index', $tutupanLahan->id_index)
+                ->select('proyek.*')
+                ->first();
 
             $wilayah = [
                 'id_provinsi' => $proyek?->id_provinsi,
@@ -23,7 +27,7 @@ class JasaEkosistemSeeder extends Seeder
             ];
 
             DB::table('provisioning_service')->updateOrInsert(
-                ['id_area' => $area->id_area, 'nama_objek' => 'Hasil perikanan lokal'],
+                ['id_jenis_tutupan_lahan' => $tutupanLahan->id_jenis_tutupan_lahan, 'nama_objek' => 'Hasil perikanan lokal'],
                 array_merge([
                     'produktivitas' => 1.2500,
                     'harga_pasar' => 35000,
@@ -36,7 +40,7 @@ class JasaEkosistemSeeder extends Seeder
             );
 
             DB::table('regulating_service')->updateOrInsert(
-                ['id_area' => $area->id_area, 'jenis_regulating' => 'Perlindungan pesisir'],
+                ['id_jenis_tutupan_lahan' => $tutupanLahan->id_jenis_tutupan_lahan, 'jenis_regulating' => 'Perlindungan pesisir'],
                 array_merge([
                     'indikator' => 'Luas tutupan',
                     'satuan' => 'Hektar',
@@ -48,7 +52,7 @@ class JasaEkosistemSeeder extends Seeder
             );
 
             DB::table('supporting_service')->updateOrInsert(
-                ['id_area' => $area->id_area, 'fungsi_pendukung' => 'Habitat dan siklus nutrien'],
+                ['id_jenis_tutupan_lahan' => $tutupanLahan->id_jenis_tutupan_lahan, 'fungsi_pendukung' => 'Habitat dan siklus nutrien'],
                 array_merge([
                     'deskripsi' => 'Menopang keanekaragaman hayati.',
                     'referensi' => 'Kajian ekologi 2025',
@@ -58,7 +62,7 @@ class JasaEkosistemSeeder extends Seeder
             );
 
             DB::table('cultural_service')->updateOrInsert(
-                ['id_area' => $area->id_area, 'nama_aktivitas' => 'Wisata edukasi ekosistem'],
+                ['id_jenis_tutupan_lahan' => $tutupanLahan->id_jenis_tutupan_lahan, 'nama_aktivitas' => 'Wisata edukasi ekosistem'],
                 array_merge([
                     'jumlah_pengunjung' => 1200,
                     'biaya_perjalanan' => 150000,

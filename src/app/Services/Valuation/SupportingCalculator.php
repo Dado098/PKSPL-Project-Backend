@@ -30,10 +30,7 @@ class SupportingCalculator
 
     public function calculateRecord(object $record): string
     {
-        if ($record->referensi !== null && $record->referensi !== '') {
-            return FormulaHelper::normalizeNumber($record->referensi);
-        }
-
+        // Referensi adalah metadata sumber, bukan parameter numerik.
         return FormulaHelper::normalizeNumber($record->nilai ?? 0);
     }
 }

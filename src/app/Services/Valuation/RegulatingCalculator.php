@@ -30,17 +30,10 @@ class RegulatingCalculator
 
     public function calculateRecord(object $record): string
     {
-        $harga = $record->harga ?? null;
-        $luas = $record->luas ?? null;
-
-        if ($harga !== null && $luas !== null) {
-            return FormulaHelper::safeMultiply(
-                $record->nilai_indikator ?? 0,
-                $harga,
-                $luas,
-            );
-        }
-
+        // Struktur jasa pengaturan hanya menyimpan nilai ekonomi yang telah
+        // ditetapkan dari indikator dan referensi; harga dan luas bukan bagian
+        // dari skema terbaru sehingga tidak boleh dipakai sebagai parameter
+        // perhitungan implisit.
         return FormulaHelper::normalizeNumber($record->nilai ?? 0);
     }
 }

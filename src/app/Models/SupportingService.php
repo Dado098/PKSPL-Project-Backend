@@ -10,7 +10,7 @@ class SupportingService extends Model
 {
     protected $table = 'supporting_service';
     protected $primaryKey = 'id_supporting';
-    protected $fillable = ['id_area', 'fungsi_pendukung', 'deskripsi', 'referensi', 'nilai', 'kategori_tev', 'id_provinsi', 'id_kabupaten_kota', 'id_kecamatan', 'id_desa_kelurahan'];
+    protected $fillable = ['id_jenis_tutupan_lahan', 'fungsi_pendukung', 'deskripsi', 'referensi', 'nilai', 'kategori_tev', 'id_provinsi', 'id_kabupaten_kota', 'id_kecamatan', 'id_desa_kelurahan'];
 
     /** Mengubah nilai ekonomi jasa pendukung ke presisi numerik. */
     protected function casts(): array
@@ -24,10 +24,10 @@ class SupportingService extends Model
         return 'id_supporting';
     }
 
-    /** Jasa pendukung terkait dengan satu area terdampak. */
-    public function areaTerdampak(): BelongsTo
+    /** Jasa pendukung terkait dengan satu jenis tutupan lahan. */
+    public function jenisTutupanLahan(): BelongsTo
     {
-        return $this->belongsTo(AreaTerdampak::class, 'id_area', 'id_area');
+        return $this->belongsTo(JenisTutupanLahan::class, 'id_jenis_tutupan_lahan', 'id_jenis_tutupan_lahan');
     }
 
     public function provinsi(): BelongsTo

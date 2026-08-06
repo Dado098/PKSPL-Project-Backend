@@ -2,7 +2,6 @@
 
 namespace Tests\Unit;
 
-use App\Models\AreaTerdampak;
 use App\Services\Valuation\CulturalCalculator;
 use App\Services\Valuation\FormulaHelper;
 use App\Services\Valuation\ProvisioningCalculator;
@@ -34,13 +33,13 @@ class TevCalculatorTest extends TestCase
         $regulating->id_regulating = 2;
         $regulating->kategori_tev = 'IUV';
         $regulating->nilai_indikator = '5';
-        $regulating->harga = '6';
-        $regulating->luas = '7';
+        $regulating->nilai = '210';
 
         $supporting = new \stdClass();
         $supporting->id_supporting = 3;
         $supporting->kategori_tev = 'OV';
-        $supporting->referensi = '8';
+        $supporting->referensi = 'SNI 1234:2025';
+        $supporting->nilai = '8';
 
         $cultural = new \stdClass();
         $cultural->id_cultural = 4;
@@ -58,5 +57,14 @@ class TevCalculatorTest extends TestCase
         $this->assertSame('210', $regulatingCalculator->calculateRecord($regulating));
         $this->assertSame('8', $supportingCalculator->calculateRecord($supporting));
         $this->assertSame('990', $culturalCalculator->calculateRecord($cultural));
+    }
+
+    public function test_supporting_reference_never_overrides_economic_value(): void
+    {
+        $supporting = new \stdClass();
+        $supporting->referensi = '2025';
+        $supporting->nilai = '125.5';
+
+        $this->assertSame('125.5', (new SupportingCalculator())->calculateRecord($supporting));
     }
 }

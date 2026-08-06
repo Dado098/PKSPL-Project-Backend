@@ -2,7 +2,7 @@
 
 namespace App\Services\Valuation;
 
-use App\Models\AreaTerdampak;
+use App\Models\JenisTutupanLahan;
 use Illuminate\Support\Collection;
 
 class TevCalculator
@@ -15,21 +15,21 @@ class TevCalculator
     ) {
     }
 
-    public function calculate(int $idArea): array
+    public function calculate(int $idJenisTutupanLahan): array
     {
-        $area = AreaTerdampak::query()->find($idArea);
+        $jenisTutupanLahan = JenisTutupanLahan::query()->find($idJenisTutupanLahan);
 
-        if ($area === null) {
-            throw new \RuntimeException('Area tidak ditemukan.');
+        if ($jenisTutupanLahan === null) {
+            throw new \RuntimeException('Jenis tutupan lahan tidak ditemukan.');
         }
 
-        $provisioning = $area->provisioningServices()->get();
-        $regulating = $area->regulatingServices()->get();
-        $supporting = $area->supportingServices()->get();
-        $cultural = $area->culturalServices()->get();
+        $provisioning = $jenisTutupanLahan->provisioningServices()->get();
+        $regulating = $jenisTutupanLahan->regulatingServices()->get();
+        $supporting = $jenisTutupanLahan->supportingServices()->get();
+        $cultural = $jenisTutupanLahan->culturalServices()->get();
 
         if ($provisioning->isEmpty() && $regulating->isEmpty() && $supporting->isEmpty() && $cultural->isEmpty()) {
-            throw new \RuntimeException('Area tidak memiliki data valuasi.');
+            throw new \RuntimeException('Jenis tutupan lahan tidak memiliki data valuasi.');
         }
 
         $provisioningResult = $this->calculateProvisioning($provisioning);

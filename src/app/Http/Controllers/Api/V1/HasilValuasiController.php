@@ -13,21 +13,23 @@ use Symfony\Component\HttpFoundation\Response;
 class HasilValuasiController extends ApiResourceController
 {
     protected string $model = HasilValuasi::class;
+
     protected string $resource = HasilValuasiResource::class;
 
-    public function __construct(private readonly TevCalculator $tevCalculator)
-    {
-    }
+    public function __construct(private readonly TevCalculator $tevCalculator) {}
 
     // Meneruskan operasi CRUD ke helper dengan request yang sudah tervalidasi.
-    public function index(Request $request) { return $this->indexResource($request); }
+    public function index(Request $request)
+    {
+        return $this->indexResource($request);
+    }
 
     public function store(HasilValuasiRequest $request)
     {
         $payload = $request->validated();
 
         try {
-            $result = $this->tevCalculator->calculate((int) $payload['id_area']);
+            $result = $this->tevCalculator->calculate((int) $payload['id_jenis_tutupan_lahan']);
         } catch (\RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
         }
@@ -43,7 +45,31 @@ class HasilValuasiController extends ApiResourceController
         return $this->storeResource($payload);
     }
 
-    public function show(HasilValuasi $hasilValuasi) { return $this->showResource($hasilValuasi); }
-    public function update(HasilValuasiRequest $request, HasilValuasi $hasilValuasi) { return $this->updateResource($hasilValuasi, $request->validated()); }
-    public function destroy(HasilValuasi $hasilValuasi) { return $this->destroyResource($hasilValuasi); }
+    public function show(HasilValuasi $hasilValuasi)
+    {
+        return $this->showResource($hasilValuasi);
+    }
+
+    public function update(HasilValuasiRequest $request, HasilValuasi $hasilValuasi)
+    {
+        $payload = $request->validated();
+
+        if (array_key_exists('id_jenis_tutupan_lahan', $payload)) {
+            try {
+                $result = $this->tevCalculator->calculate((int) $payload['id_jenis_tutupan_lahan']);
+            } catch (\RuntimeException $exception) {
+                return response()->json(['message' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
+            }
+
+            $payload = array_merge($payload, $result);
+            unset($payload['detail']);
+        }
+
+        return $this->updateResource($hasilValuasi, $payload);
+    }
+
+    public function destroy(HasilValuasi $hasilValuasi)
+    {
+        return $this->destroyResource($hasilValuasi);
+    }
 }
