@@ -32,6 +32,8 @@ class DatabaseSeeder extends Seeder
             ProsesAnalisisSeeder::class,
             // Review & Discussion Module (additive)
             ReviewSeeder::class,
+            // Valuation Module
+            ValuationSeeder::class,
         ]);
     }
 }

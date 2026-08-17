@@ -112,4 +112,71 @@ class Proyek extends Model
     {
         return $this->hasMany(Review::class, 'id_proyek', 'id_proyek');
     }
+
+    // ===== Valuation Integration Module (additive) =====
+
+    public function projectValuationSetting()
+    {
+        return $this->hasOne(ProjectValuationSetting::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function valuationModules(): HasMany
+    {
+        return $this->hasMany(ValuationModule::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function benefits(): HasMany
+    {
+        return $this->hasMany(Benefit::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function costs(): HasMany
+    {
+        return $this->hasMany(Cost::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function eopData(): HasMany
+    {
+        return $this->hasMany(EopData::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function tcmData(): HasMany
+    {
+        return $this->hasMany(TcmData::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function tcmAnalyses(): HasMany
+    {
+        return $this->hasMany(TcmAnalysis::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function cvmData(): HasMany
+    {
+        return $this->hasMany(CvmData::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function cvmAnalyses(): HasMany
+    {
+        return $this->hasMany(CvmAnalysis::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function duvData(): HasMany
+    {
+        return $this->hasMany(DuvData::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function hpmData(): HasMany
+    {
+        return $this->hasMany(HpmData::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function abmData(): HasMany
+    {
+        return $this->hasMany(AbmData::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function ceData(): HasMany
+    {
+        return $this->hasMany(CeData::class, 'id_proyek', 'id_proyek');
+    }
 }

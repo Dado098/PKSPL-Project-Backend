@@ -256,3 +256,6 @@ Route::prefix('v1')->group(function (): void {
 
 // BAB 7 didefinisikan dalam berkas terpisah untuk modul review dan diskusi.
 require __DIR__ . '/api_review.php';
+
+// BAB 8 didefinisikan dalam berkas terpisah untuk modul valuasi ekonomi terintegrasi.
+require __DIR__ . '/api_valuation.php';
