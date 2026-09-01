@@ -40,7 +40,7 @@ class AuthController extends Controller
     /**
      * codingan untuk menerima callback Google OAuth dan membuat atau memperbarui user.
      */
-    public function googleCallback(Request $request): JsonResponse
+    public function googleCallback(Request $request)
     {
         $code = $request->input('code');
 
@@ -80,39 +80,42 @@ class AuthController extends Controller
             ], Response::HTTP_UNAUTHORIZED);
         }
 
+        $email = strtolower(trim((string) ($socialUser['email'] ?? '')));
+
+        if ($email === '') {
+            return response()->json([
+                'message' => 'Google account email is missing.',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
         $user = User::query()
-            ->where('email', $socialUser['email'] ?? null)
+            ->whereRaw('LOWER(email) = ?', [$email])
             ->first();
 
         if (! $user) {
-            // codingan untuk membuat user baru jika email belum ada.
-            $guestRole = Role::query()
-                ->where('nama_role', Role::GUEST)
-                ->firstOrFail();
+            Log::warning('Google login rejected for unregistered email.', [
+                'email' => $email,
+                'google_sub' => $socialUser['sub'] ?? null,
+            ]);
 
-            $user = User::query()->create([
-                'id_role' => $guestRole->id_role,
-                'nama' => $socialUser['name'] ?? explode('@', $socialUser['email'] ?? '')[0],
-                'email' => $socialUser['email'],
-                'password' => Str::random(24),
-                'google_id' => $socialUser['sub'] ?? null,
-                'foto' => $socialUser['picture'] ?? null,
-                'status' => 'Aktif',
-            ]);
-        } else {
-            // codingan untuk memperbarui google_id dan foto jika user sudah ada.
-            $user->update([
-                'google_id' => $socialUser['sub'] ?? $user->google_id,
-                'foto' => $socialUser['picture'] ?? $user->foto,
-            ]);
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+
+            return redirect()->away($frontendUrl . '/login?error=' . urlencode('Akun Google belum terdaftar. Silakan hubungi admin atau gunakan akun yang sudah terdaftar.'));
         }
 
-        // codingan untuk mengembalikan token akses Sanctum setelah login.
-        return response()->json([
-            'user' => new UserResource($user),
-            'access_token' => $user->createToken('auth-token')->plainTextToken,
-            'token_type' => 'Bearer',
+        $user->update([
+            'google_id' => $socialUser['sub'] ?? $user->google_id,
+            'foto' => $socialUser['picture'] ?? $user->foto,
         ]);
+
+        $user->load('role');
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+
+        return redirect()->away($frontendUrl . '/auth/callback?' . http_build_query([
+            'token' => $token,
+        ]));
     }
 
     /**
@@ -152,9 +155,9 @@ class AuthController extends Controller
         $query = User::query()->where('status', 'Aktif');
 
         if (filter_var($identity, FILTER_VALIDATE_EMAIL) !== false) {
-            $query->where('email', $identity);
+            $query->whereRaw('LOWER(email) = ?', [strtolower(trim($identity))]);
         } else {
-            $query->where('nama', $identity);
+            $query->whereRaw('LOWER(nama) = ?', [strtolower(trim($identity))]);
         }
 
         $user = $query->first();
@@ -162,6 +165,8 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($password, $user->password)) {
             return response()->json(['message' => 'Invalid login credentials.'], Response::HTTP_UNAUTHORIZED);
         }
+
+        $user->load('role');
 
         // codingan untuk menghasilkan token akses Sanctum jika login berhasil.
         return response()->json([
@@ -196,6 +201,8 @@ class AuthController extends Controller
             $user->load('role');
         }
 
-        return response()->json(['user' => new UserResource($user)]);
+        return response()->json([
+            'user' => $user ? new UserResource($user) : null,
+        ]);
     }
 }

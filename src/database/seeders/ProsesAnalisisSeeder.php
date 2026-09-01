@@ -11,8 +11,8 @@ class ProsesAnalisisSeeder extends Seeder
     /** Menyimpan data proses yang memiliki referensi valid ke proyek dan user. */
     public function run(): void
     {
-        $analyst = DB::table('users')->where('email', 'analyst@pkspl.test')->value('id_user');
-        $peneliti = DB::table('users')->where('email', 'peneliti@pkspl.test')->value('id_user');
+        $analyst = DB::table('users')->where('email', 'analyst@gmail.com')->value('id_user');
+        $peneliti = DB::table('users')->where('email', 'peneliti@gmail.com')->value('id_user');
         $metode = DB::table('metode_valuasi')->where('nama_metode', 'Harga Pasar')->value('id_metode');
 
         foreach (DB::table('jenis_tutupan_lahan')->get() as $tutupanLahan) {
