@@ -19,6 +19,18 @@ use Symfony\Component\HttpFoundation\Response;
 class AuthController extends Controller
 {
     /**
+     * Mencari role berdasarkan nama yang tersimpan di database, tanpa asumsi ID.
+     */
+    protected function findRoleByName(string $roleName): ?Role
+    {
+        $normalizedName = Role::normalize(trim($roleName));
+
+        return Role::query()
+            ->whereRaw('LOWER(nama_role) = ?', [strtolower($normalizedName)])
+            ->first();
+    }
+
+    /**
      * codingan untuk membuat URL redirect Google OAuth.
      */
     public function googleRedirect(): JsonResponse
@@ -92,15 +104,28 @@ class AuthController extends Controller
             ->whereRaw('LOWER(email) = ?', [$email])
             ->first();
 
+        $accountCreated = false;
+
         if (! $user) {
-            Log::warning('Google login rejected for unregistered email.', [
+            $guestRole = $this->findRoleByName(Role::GUEST);
+
+            if (! $guestRole) {
+                return response()->json([
+                    'message' => 'Guest role is missing in roles table. Please seed roles before Google login.',
+                ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            $user = User::query()->create([
+                'id_role' => $guestRole->id_role,
+                'nama' => $socialUser['name'] ?? explode('@', $email)[0],
                 'email' => $email,
-                'google_sub' => $socialUser['sub'] ?? null,
+                'password' => Hash::make(Str::random(32)),
+                'google_id' => $socialUser['sub'] ?? null,
+                'foto' => $socialUser['picture'] ?? null,
+                'status' => 'Aktif',
             ]);
 
-            $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
-
-            return redirect()->away($frontendUrl . '/login?error=' . urlencode('Akun Google belum terdaftar. Silakan hubungi admin atau gunakan akun yang sudah terdaftar.'));
+            $accountCreated = true;
         }
 
         $user->update([
@@ -115,6 +140,7 @@ class AuthController extends Controller
 
         return redirect()->away($frontendUrl . '/auth/callback?' . http_build_query([
             'token' => $token,
+            'account_created' => $accountCreated ? '1' : '0',
         ]));
     }
 
@@ -123,9 +149,13 @@ class AuthController extends Controller
      */
     public function register(AuthRegisterRequest $request): JsonResponse
     {
-        $guestRole = Role::query()
-            ->where('nama_role', Role::GUEST)
-            ->firstOrFail();
+        $guestRole = $this->findRoleByName(Role::GUEST);
+
+        if (! $guestRole) {
+            return response()->json([
+                'message' => 'Guest role is missing in roles table. Please seed roles before creating a user.',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
 
         // codingan untuk menyimpan user baru ke database.
         $user = User::query()->create([

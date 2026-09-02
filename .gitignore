@@ -9,6 +9,11 @@ src/storage/framework/views/*
 src/bootstrap/cache/*
 src/.env
 
+# Environment files
+.env
+.env.*
+.env.docker
+
 # IDE
 .vscode/
 .idea/

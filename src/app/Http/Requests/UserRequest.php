@@ -8,8 +8,13 @@ use Illuminate\Validation\Rule;
 /** Memvalidasi data pengguna dari request API. */
 class UserRequest extends FormRequest
 {
-    /** Mengizinkan request karena otorisasi belum diterapkan. */
-    public function authorize(): bool { return true; }
+    /** Hanya admin yang dapat mengelola data pengguna. */
+    public function authorize(): bool
+    {
+        $user = $this->user();
+
+        return $user && $user->role()->where('nama_role', \App\Models\Role::ADMIN)->exists();
+    }
 
     /** Menetapkan aturan validasi pengguna. */
     public function rules(): array

@@ -89,7 +89,9 @@ Route::prefix('v1')->group(function (): void {
     // Mengelola akun pengguna aplikasi.
     // ------------------------------------------------------------
     // 1.4.1 Mengelola daftar, detail, pembuatan, perubahan, dan penghapusan pengguna.
-    Route::apiResource('users', UserController::class);
+    Route::middleware(['auth:sanctum', 'role:Admin'])->group(function (): void {
+        Route::apiResource('users', UserController::class);
+    });
 
     // ============================================================
     // BAB 2. WILAYAH ADMINISTRATIF

@@ -13,10 +13,43 @@ class UserController extends ApiResourceController
     protected string $model = User::class;
     protected string $resource = UserResource::class;
 
-    // Meneruskan operasi CRUD ke helper dengan request yang sudah tervalidasi.
-    public function index(Request $request) { return $this->indexResource($request); }
-    public function store(UserRequest $request) { return $this->storeResource($request->validated()); }
-    public function show(User $user) { return $this->showResource($user); }
-    public function update(UserRequest $request, User $user) { return $this->updateResource($user, $request->validated()); }
-    public function destroy(User $user) { return $this->destroyResource($user); }
+    // Menampilkan daftar pengguna beserta relasi role untuk kebutuhan panel admin.
+    public function index(Request $request)
+    {
+        $validated = $request->validate(['per_page' => ['nullable', 'integer', 'min:1', 'max:100']]);
+
+        return $this->resource::collection(User::query()->with('role')->paginate($validated['per_page'] ?? 15));
+    }
+
+    public function store(UserRequest $request)
+    {
+        $user = User::query()->create($request->validated());
+
+        $user->load('role');
+
+        return (new $this->resource($user))->response()->setStatusCode(201);
+    }
+
+    public function show(User $user)
+    {
+        $user->load('role');
+
+        return $this->showResource($user);
+    }
+
+    public function update(UserRequest $request, User $user)
+    {
+        $user->update($request->validated());
+        $user->refresh();
+        $user->load('role');
+
+        return new $this->resource($user);
+    }
+
+    public function destroy(User $user)
+    {
+        $user->delete();
+
+        return response()->noContent();
+    }
 }

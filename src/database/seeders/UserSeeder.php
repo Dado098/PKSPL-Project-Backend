@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * Mengisi akun contoh untuk setiap role aplikasi.
@@ -30,7 +31,7 @@ class UserSeeder extends Seeder
                         ->where('nama_role', $role)
                         ->valueOrFail('id_role'),
                     'nama' => $nama,
-                    'password' => 'password',
+                    'password' => Hash::make('password'),
                     'status' => 'Aktif',
                 ]
             );
