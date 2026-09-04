@@ -5,52 +5,90 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Requests\ProyekRequest;
 use App\Http\Resources\ProyekResource;
 use App\Models\Proyek;
+use App\Models\Role;
+use App\Models\User;
 use App\Services\Shapefile\ShapefileUploadService;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 
-/** Menangani endpoint CRUD proyek. */
+/**
+ * Controller untuk mengelola data proyek penelitian valuasi ekonomi pesisir dan laut.
+ * Menangani operasi CRUD, penentuan kode proyek unik, pengunggahan shapefile,
+ * serta kontrol akses berbasis peran (Peneliti vs Admin/Analyst).
+ */
 class ProyekController extends ApiResourceController
 {
     protected string $model = Proyek::class;
 
     protected string $resource = ProyekResource::class;
 
-    // Meneruskan operasi CRUD ke helper dengan request yang sudah tervalidasi.
-    public function __construct(private readonly ShapefileUploadService $shapefileUploadService) {}
+    /**
+     * Memuat dependensi ShapefileUploadService untuk menangani unggahan berkas spasial.
+     */
+    public function __construct(
+        private readonly ShapefileUploadService $shapefileUploadService
+    ) {}
 
-    public function index(Request $request)
+    /**
+     * Menampilkan daftar proyek yang dapat diakses pengguna.
+     * Peneliti hanya dapat melihat proyek miliknya sendiri,
+     * sedangkan peran lain (Admin/Analyst) dapat melihat seluruh proyek.
+     */
+    public function index(Request $request): AnonymousResourceCollection
     {
         $user = $request->user() ?? $request->user('sanctum') ?? auth('sanctum')->user();
-        $query = Proyek::query()->with(['provinsi', 'kabupatenKota', 'kecamatan', 'desaKelurahan']);
 
+        $query = Proyek::query()
+            ->with([
+                'provinsi',
+                'kabupatenKota',
+                'kecamatan',
+                'desaKelurahan',
+            ]);
+
+        // Peneliti hanya dapat melihat proyek yang dimilikinya sendiri.
         if ($user) {
-            $roleName = $user->role ? \App\Models\Role::normalize($user->role->nama_role) : null;
-            if ($roleName === \App\Models\Role::PENELITI) {
+            $roleName = $user->role ? Role::normalize($user->role->nama_role) : null;
+            if ($roleName === Role::PENELITI) {
                 $query->where('id_user', $user->id_user);
             }
         }
 
-        $validated = $request->validate(['per_page' => ['nullable', 'integer', 'min:1', 'max:100']]);
+        $validated = $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
         $perPage = $validated['per_page'] ?? 15;
 
         return ProyekResource::collection($query->paginate($perPage));
     }
 
-    public function nextCode(): \Illuminate\Http\JsonResponse
+    /**
+     * Mengunduh/meminta kode proyek unik berikutnya (PKS-XXXXXX) untuk preview frontend.
+     */
+    public function nextCode(): JsonResponse
     {
         return response()->json([
             'next_code' => self::generateNextKodeProyek(),
         ]);
     }
 
+    /**
+     * Membuat proyek baru beserta unggahan berkas spasial (SHP/Zip).
+     * Memastikan kode proyek unik dan aman dari klaim ganda.
+     */
     public function store(ProyekRequest $request)
     {
         $payload = $this->attributesWithoutFiles($request);
 
+        // Validasi dan penentuan kode proyek unik dari request atau generator
         $requestedCode = strtoupper(trim((string) $request->input('kode_proyek', '')));
         if ($requestedCode && preg_match('/^PKS-[A-Z0-9]{6}$/', $requestedCode)) {
-            $exists = \Illuminate\Support\Facades\DB::table('proyek')->where('kode_proyek', $requestedCode)->exists();
-            if (!$exists) {
+            $exists = DB::table('proyek')->where('kode_proyek', $requestedCode)->exists();
+            if (! $exists) {
                 $payload['kode_proyek'] = $requestedCode;
             } else {
                 $payload['kode_proyek'] = self::generateNextKodeProyek();
@@ -59,6 +97,7 @@ class ProyekController extends ApiResourceController
             $payload['kode_proyek'] = self::generateNextKodeProyek();
         }
 
+        // Penanganan percobaan menyimpan dengan proteksi race-condition uniqueness
         $maxAttempts = 5;
         $proyek = null;
 
@@ -66,7 +105,7 @@ class ProyekController extends ApiResourceController
             try {
                 $proyek = Proyek::query()->create($payload);
                 break;
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (QueryException $e) {
                 if ($attempt < $maxAttempts - 1 && (str_contains($e->getMessage(), 'kode_proyek') || $e->getCode() == '23505')) {
                     $payload['kode_proyek'] = self::generateNextKodeProyek();
                     continue;
@@ -77,9 +116,14 @@ class ProyekController extends ApiResourceController
 
         $this->storeUploadedFiles($request, $proyek);
 
-        return (new ProyekResource($proyek->refresh()))->response()->setStatusCode(201);
+        return (new ProyekResource($proyek->refresh()))
+            ->response()
+            ->setStatusCode(201);
     }
 
+    /**
+     * Menghasilan kode proyek acak dengan format PKS-XXXXXX yang belum terdaftar di database.
+     */
     public static function generateNextKodeProyek(): string
     {
         $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -88,58 +132,90 @@ class ProyekController extends ApiResourceController
             for ($i = 0; $i < 6; $i++) {
                 $code .= $characters[random_int(0, strlen($characters) - 1)];
             }
-        } while (\Illuminate\Support\Facades\DB::table('proyek')->where('kode_proyek', $code)->exists());
+        } while (DB::table('proyek')->where('kode_proyek', $code)->exists());
 
         return $code;
     }
 
+    /**
+     * Menampilkan rincian proyek berdasarkan ID proyek.
+     * Menerapkan otorisasi kepemilikan untuk peran Peneliti.
+     */
     public function show(Request $request, Proyek $proyek)
     {
         $user = $request->user() ?? $request->user('sanctum') ?? auth('sanctum')->user();
         if ($user) {
-            $roleName = $user->role ? \App\Models\Role::normalize($user->role->nama_role) : null;
-            if ($roleName === \App\Models\Role::PENELITI && (int) $proyek->id_user !== (int) $user->id_user) {
-                return response()->json(['message' => 'Anda tidak memiliki akses ke proyek ini.'], 403);
+            $roleName = $user->role ? Role::normalize($user->role->nama_role) : null;
+            if ($roleName === Role::PENELITI && (int) $proyek->id_user !== (int) $user->id_user) {
+                return response()->json([
+                    'message' => 'Anda tidak memiliki akses ke proyek ini.',
+                ], 403);
             }
         }
 
-        $proyek->load(['provinsi', 'kabupatenKota', 'kecamatan', 'desaKelurahan']);
+        $proyek->load([
+            'provinsi',
+            'kabupatenKota',
+            'kecamatan',
+            'desaKelurahan',
+        ]);
+
         return $this->showResource($proyek);
     }
 
+    /**
+     * Memperbarui informasi proyek.
+     * Mengabaikan perubahan id_user dan kode_proyek agar bersifat permanen.
+     */
     public function update(ProyekRequest $request, Proyek $proyek)
     {
         $user = $request->user() ?? $request->user('sanctum') ?? auth('sanctum')->user();
         if ($user) {
-            $roleName = $user->role ? \App\Models\Role::normalize($user->role->nama_role) : null;
-            if ($roleName === \App\Models\Role::PENELITI && (int) $proyek->id_user !== (int) $user->id_user) {
-                return response()->json(['message' => 'Anda tidak memiliki akses untuk mengubah proyek ini.'], 403);
+            $roleName = $user->role ? Role::normalize($user->role->nama_role) : null;
+            if ($roleName === Role::PENELITI && (int) $proyek->id_user !== (int) $user->id_user) {
+                return response()->json([
+                    'message' => 'Anda tidak memiliki akses untuk mengubah proyek ini.',
+                ], 403);
             }
         }
 
         $payload = $this->attributesWithoutFiles($request);
+
+        // id_user dan kode_proyek bersifat permanen dan tidak boleh diubah via update
         unset($payload['id_user']);
         unset($payload['kode_proyek']);
 
         $proyek->update($payload);
         $this->storeUploadedFiles($request, $proyek);
-        $proyek->load(['provinsi', 'kabupatenKota', 'kecamatan', 'desaKelurahan']);
+
+        $proyek->load([
+            'provinsi',
+            'kabupatenKota',
+            'kecamatan',
+            'desaKelurahan',
+        ]);
 
         return new ProyekResource($proyek->refresh());
     }
 
+    /**
+     * Menghapus proyek beserta seluruh data turunan dan berkas terkait.
+     */
     public function destroy(Request $request, Proyek $proyek)
     {
         $user = $request->user() ?? $request->user('sanctum') ?? auth('sanctum')->user();
         if ($user) {
-            $roleName = $user->role ? \App\Models\Role::normalize($user->role->nama_role) : null;
-            if ($roleName === \App\Models\Role::PENELITI && (int) $proyek->id_user !== (int) $user->id_user) {
-                return response()->json(['message' => 'Anda tidak memiliki akses untuk menghapus proyek ini.'], 403);
+            $roleName = $user->role ? Role::normalize($user->role->nama_role) : null;
+            if ($roleName === Role::PENELITI && (int) $proyek->id_user !== (int) $user->id_user) {
+                return response()->json([
+                    'message' => 'Anda tidak memiliki akses untuk menghapus proyek ini.',
+                ], 403);
             }
         }
 
+        // Hapus data anak berelasi secara terstruktur
         foreach ($proyek->indexes as $index) {
-            \Illuminate\Support\Facades\DB::table('jenis_tutupan_lahan')->where('id_index', $index->id_index)->delete();
+            DB::table('jenis_tutupan_lahan')->where('id_index', $index->id_index)->delete();
             $index->delete();
         }
         $proyek->areaTerdampak()->delete();
@@ -150,28 +226,32 @@ class ProyekController extends ApiResourceController
         $proyek->costs()->delete();
         $proyek->valuationModules()->delete();
         $proyek->projectValuationSetting()->delete();
+
         return $this->destroyResource($proyek);
     }
 
+    /**
+     * Mengekstrak atribut request tanpa berkas dan menetapkan default value serta id_user.
+     */
     private function attributesWithoutFiles(ProyekRequest $request): array
     {
-        // 1. Strip id_user and file inputs from validated request data
+        // 1. Ekstrak data tervalidasi tanpa atribut berkas dan id_user awal
         $payload = collect($request->validated())
             ->except(['id_user', 'shp', 'shx', 'dbf', 'prj', 'zip', 'shapefile_files'])
             ->all();
 
-        // 2. Security: Always enforce authenticated user as single source of truth for id_user
+        // 2. Keamanan: Tetapkan id_user dari pengguna terautentikasi
         $user = $request->user() ?? $request->user('sanctum') ?? auth('sanctum')->user();
         if ($user) {
             $payload['id_user'] = $user->id_user;
         } else {
-            $firstUser = \App\Models\User::query()->first();
+            $firstUser = User::query()->first();
             if ($firstUser) {
                 $payload['id_user'] = $firstUser->id_user;
             }
         }
 
-        // Parse geometry if passed as JSON string (e.g. via FormData)
+        // Parse geometry jika dikirim sebagai JSON string (misalnya via FormData)
         if (isset($payload['geometry']) && is_string($payload['geometry'])) {
             $decoded = json_decode($payload['geometry'], true);
             if (json_last_error() === JSON_ERROR_NONE) {
@@ -179,7 +259,7 @@ class ProyekController extends ApiResourceController
             }
         }
 
-        // Default fallbacks
+        // Nilai bawaan (default fallbacks)
         if (empty($payload['tujuan_valuasi'])) {
             $payload['tujuan_valuasi'] = 'Valuasi Ekonomi Ekosistem';
         }
@@ -193,6 +273,9 @@ class ProyekController extends ApiResourceController
         return $payload;
     }
 
+    /**
+     * Menyimpan berkas shapefile yang diunggah menggunakan ShapefileUploadService.
+     */
     private function storeUploadedFiles(ProyekRequest $request, Proyek $proyek): void
     {
         $files = $request->only(['shp', 'shx', 'dbf', 'prj', 'zip']);
@@ -201,7 +284,7 @@ class ProyekController extends ApiResourceController
             $extra = $request->file('shapefile_files');
             if (is_array($extra)) {
                 $files['shapefile_files'] = $extra;
-            } elseif ($extra instanceof \Illuminate\Http\UploadedFile) {
+            } elseif ($extra instanceof UploadedFile) {
                 $ext = strtolower($extra->getClientOriginalExtension());
                 $files[$ext ?: 'zip'] = $extra;
             }
