@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\AIController;
 use App\Http\Controllers\Api\V1\ValidasiAnalystController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\StatisticsController;
 use Illuminate\Support\Facades\Route;
 
 // ============================================================
@@ -36,6 +37,8 @@ use Illuminate\Support\Facades\Route;
 // Seluruh endpoint dalam bab ini menggunakan prefiks v1.
 // ============================================================
 Route::prefix('v1')->group(function (): void {
+    // Landing Page statistics endpoint
+    Route::get('statistics', [StatisticsController::class, 'index']);
     // ------------------------------------------------------------
     // 1.1 AUTENTIKASI
     // Menangani pendaftaran, sesi pengguna, dan integrasi Google.
