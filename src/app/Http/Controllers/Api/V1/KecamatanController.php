@@ -19,11 +19,21 @@ class KecamatanController extends ApiResourceController
     protected string $resource = KecamatanResource::class;
 
     /**
-     * Menampilkan daftar kecamatan secara paginated.
+     * Menampilkan daftar kecamatan secara paginated atau terfilter id_kabupaten_kota.
      */
     public function index(Request $request)
     {
-        return $this->indexResource($request);
+        $query = Kecamatan::query();
+
+        if ($request->has('id_kabupaten_kota')) {
+            $query->where('id_kabupaten_kota', $request->input('id_kabupaten_kota'));
+        }
+
+        if ($request->input('per_page') === 'all') {
+            return $this->resource::collection($query->get());
+        }
+
+        return $this->resource::collection($query->paginate($request->input('per_page', 100)));
     }
 
     /**

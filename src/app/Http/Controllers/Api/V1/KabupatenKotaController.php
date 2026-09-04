@@ -19,11 +19,21 @@ class KabupatenKotaController extends ApiResourceController
     protected string $resource = KabupatenKotaResource::class;
 
     /**
-     * Menampilkan daftar kabupaten atau kota secara paginated.
+     * Menampilkan daftar kabupaten atau kota secara paginated atau terfilter id_provinsi.
      */
     public function index(Request $request)
     {
-        return $this->indexResource($request);
+        $query = KabupatenKota::query();
+
+        if ($request->has('id_provinsi')) {
+            $query->where('id_provinsi', $request->input('id_provinsi'));
+        }
+
+        if ($request->input('per_page') === 'all') {
+            return $this->resource::collection($query->get());
+        }
+
+        return $this->resource::collection($query->paginate($request->input('per_page', 100)));
     }
 
     /**

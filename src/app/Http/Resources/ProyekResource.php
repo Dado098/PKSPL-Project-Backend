@@ -17,6 +17,7 @@ class ProyekResource extends JsonResource
     {
         return [
             'id_proyek' => $this->id_proyek,
+            'kode_proyek' => $this->kode_proyek,
             'id_user' => $this->id_user,
             'nama_proyek' => $this->nama_proyek,
             'tujuan_valuasi' => $this->tujuan_valuasi,

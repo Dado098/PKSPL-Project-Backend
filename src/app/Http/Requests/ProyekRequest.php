@@ -20,47 +20,82 @@ class ProyekRequest extends FormRequest
         $required = $this->isMethod('post') ? 'required' : 'sometimes';
 
         return [
-            'id_user' => [$required, 'integer', 'exists:users,id_user'],
-            'id_provinsi' => [$required, 'integer', 'exists:provinsi,id_provinsi'],
-            'id_kabupaten_kota' => [$required, 'integer', 'exists:kabupaten_kota,id_kabupaten_kota'],
-            'id_kecamatan' => [$required, 'integer', 'exists:kecamatan,id_kecamatan'],
-            'id_desa_kelurahan' => [$required, 'integer', 'exists:desa_kelurahan,id_desa_kelurahan'],
+            'id_user' => ['nullable'],
+            'kode_proyek' => ['nullable', 'string', 'max:50'],
+            'id_provinsi' => ['nullable', 'integer', 'exists:provinsi,id_provinsi'],
+            'id_kabupaten_kota' => ['nullable', 'integer', 'exists:kabupaten_kota,id_kabupaten_kota'],
+            'id_kecamatan' => ['nullable', 'integer', 'exists:kecamatan,id_kecamatan'],
+            'id_desa_kelurahan' => ['nullable', 'integer', 'exists:desa_kelurahan,id_desa_kelurahan'],
             'nama_proyek' => [$required, 'string', 'max:150'],
-            'tujuan_valuasi' => [$required, 'string'],
+            'tujuan_valuasi' => ['nullable', 'string'],
             'alamat_lengkap' => ['nullable', 'string'],
-            'latitude' => ['nullable', 'numeric', 'decimal:0,6'],
-            'longitude' => ['nullable', 'numeric', 'decimal:0,6'],
-            'luas' => ['nullable', 'numeric', 'decimal:0,2'],
+            'latitude' => ['nullable', 'numeric'],
+            'longitude' => ['nullable', 'numeric'],
+            'luas' => ['nullable', 'numeric'],
             'satuan_luas' => ['nullable', 'string', 'max:20'],
-            'geometry' => ['nullable', 'array'],
-            'shp' => ['nullable', 'file', 'max:51200', function (string $attribute, mixed $value, \Closure $fail): void {
-                if (strtolower((string) $value->getClientOriginalExtension()) !== 'shp') {
-                    $fail('Berkas SHP harus berekstensi .shp.');
+            'geometry' => ['nullable'],
+            'shp' => ['nullable', function (string $attribute, mixed $value, \Closure $fail): void {
+                $files = is_array($value) ? $value : [$value];
+                foreach ($files as $file) {
+                    if ($file instanceof \Illuminate\Http\UploadedFile) {
+                        if (strtolower($file->getClientOriginalExtension()) !== 'shp') {
+                            $fail('Berkas SHP harus berekstensi .shp.');
+                        }
+                    }
                 }
             }],
-            'shx' => ['nullable', 'file', 'max:51200', function (string $attribute, mixed $value, \Closure $fail): void {
-                if (strtolower((string) $value->getClientOriginalExtension()) !== 'shx') {
-                    $fail('Berkas SHX harus berekstensi .shx.');
+            'shx' => ['nullable', function (string $attribute, mixed $value, \Closure $fail): void {
+                $files = is_array($value) ? $value : [$value];
+                foreach ($files as $file) {
+                    if ($file instanceof \Illuminate\Http\UploadedFile) {
+                        if (strtolower($file->getClientOriginalExtension()) !== 'shx') {
+                            $fail('Berkas SHX harus berekstensi .shx.');
+                        }
+                    }
                 }
             }],
-            'dbf' => ['nullable', 'file', 'max:51200', function (string $attribute, mixed $value, \Closure $fail): void {
-                if (strtolower((string) $value->getClientOriginalExtension()) !== 'dbf') {
-                    $fail('Berkas DBF harus berekstensi .dbf.');
+            'dbf' => ['nullable', function (string $attribute, mixed $value, \Closure $fail): void {
+                $files = is_array($value) ? $value : [$value];
+                foreach ($files as $file) {
+                    if ($file instanceof \Illuminate\Http\UploadedFile) {
+                        if (strtolower($file->getClientOriginalExtension()) !== 'dbf') {
+                            $fail('Berkas DBF harus berekstensi .dbf.');
+                        }
+                    }
                 }
             }],
-            'prj' => ['nullable', 'file', 'max:51200', function (string $attribute, mixed $value, \Closure $fail): void {
-                if (strtolower((string) $value->getClientOriginalExtension()) !== 'prj') {
-                    $fail('Berkas PRJ harus berekstensi .prj.');
+            'prj' => ['nullable', function (string $attribute, mixed $value, \Closure $fail): void {
+                $files = is_array($value) ? $value : [$value];
+                foreach ($files as $file) {
+                    if ($file instanceof \Illuminate\Http\UploadedFile) {
+                        if (strtolower($file->getClientOriginalExtension()) !== 'prj') {
+                            $fail('Berkas PRJ harus berekstensi .prj.');
+                        }
+                    }
                 }
             }],
-            'zip' => ['nullable', 'file', 'max:51200', function (string $attribute, mixed $value, \Closure $fail): void {
-                if (strtolower((string) $value->getClientOriginalExtension()) !== 'zip') {
-                    $fail('Berkas ZIP harus berekstensi .zip.');
+            'zip' => ['nullable', function (string $attribute, mixed $value, \Closure $fail): void {
+                $files = is_array($value) ? $value : [$value];
+                foreach ($files as $file) {
+                    if ($file instanceof \Illuminate\Http\UploadedFile) {
+                        if (strtolower($file->getClientOriginalExtension()) !== 'zip') {
+                            $fail('Berkas ZIP harus berekstensi .zip.');
+                        }
+                    }
                 }
             }],
-            'tahun' => [$required, 'integer', 'between:1901,2155'],
+            'shapefile_files' => ['nullable'],
+            'shapefile_files.*' => ['nullable', function (string $attribute, mixed $value, \Closure $fail): void {
+                if ($value instanceof \Illuminate\Http\UploadedFile) {
+                    $ext = strtolower($value->getClientOriginalExtension());
+                    if (! in_array($ext, ['shp', 'shx', 'dbf', 'prj', 'zip'])) {
+                        $fail('Berkas shapefile harus berekstensi .shp, .shx, .dbf, .prj, atau .zip.');
+                    }
+                }
+            }],
+            'tahun' => ['nullable', 'integer'],
             'deskripsi' => ['nullable', 'string'],
-            'status' => [$required, Rule::in(['Draft', 'Proses', 'Selesai', 'Dibatalkan'])],
+            'status' => ['nullable', Rule::in(['Draft', 'Proses', 'Selesai', 'Dibatalkan'])],
         ];
     }
 }

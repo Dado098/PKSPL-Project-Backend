@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             KabupatenKotaSeeder::class,
             KecamatanSeeder::class,
             DesaKelurahanSeeder::class,
+            AdministrativeBoundarySeeder::class,
             EkosistemSeeder::class,
             MetodeValuasiSeeder::class,
             ProyekSeeder::class,

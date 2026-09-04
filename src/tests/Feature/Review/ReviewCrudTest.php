@@ -23,8 +23,8 @@ class ReviewCrudTest extends TestCase
     {
         parent::setUp();
         
-        Role::create(['id_role' => 1, 'nama_role' => 'Peneliti']);
-        Role::create(['id_role' => 2, 'nama_role' => 'Analyst']);
+        Role::firstOrCreate(['id_role' => 1], ['nama_role' => 'Peneliti']);
+        Role::firstOrCreate(['id_role' => 2], ['nama_role' => 'Analyst']);
 
         $this->analyst = User::factory()->create(['id_role' => 2]);
         $this->peneliti = User::factory()->create(['id_role' => 1]);

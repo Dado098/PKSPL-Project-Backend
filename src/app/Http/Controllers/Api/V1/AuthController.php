@@ -140,6 +140,7 @@ class AuthController extends Controller
 
         return redirect()->away($frontendUrl . '/auth/callback?' . http_build_query([
             'token' => $token,
+            'role' => $user->role->nama_role ?? '',
             'account_created' => $accountCreated ? '1' : '0',
         ]));
     }

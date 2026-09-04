@@ -4,8 +4,10 @@
 use App\Http\Controllers\Api\V1\AnalisisAiController;
 use App\Http\Controllers\Api\V1\AreaTerdampakController;
 use App\Http\Controllers\Api\V1\BasisDataAiController;
+use App\Http\Controllers\Api\V1\BoundaryLookupController;
 use App\Http\Controllers\Api\V1\CulturalServiceController;
 use App\Http\Controllers\Api\V1\DatasetReferensiController;
+use App\Http\Controllers\Api\V1\DesaKelurahanController;
 use App\Http\Controllers\Api\V1\EkosistemController;
 use App\Http\Controllers\Api\V1\HasilValuasiController;
 use App\Http\Controllers\Api\V1\HistoriController;
@@ -26,6 +28,7 @@ use App\Http\Controllers\Api\V1\TestController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\AIController;
 use App\Http\Controllers\Api\V1\ValidasiAnalystController;
+use App\Http\Controllers\Api\V1\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 // ============================================================
@@ -56,6 +59,12 @@ Route::prefix('v1')->group(function (): void {
 
         // 1.1.5.2 Menampilkan profil pengguna terautentikasi.
         Route::get('auth/me', [AuthController::class, 'me']);
+
+        // 1.1.5.3 Memperbarui profil pengguna terautentikasi.
+        Route::post('profile', [ProfileController::class, 'update']);
+
+        // 1.1.5.4 Mengubah password pengguna terautentikasi.
+        Route::post('profile/password', [ProfileController::class, 'updatePassword']);
     });
 
     // ------------------------------------------------------------
@@ -116,6 +125,18 @@ Route::prefix('v1')->group(function (): void {
     // 2.3.1 Mengelola CRUD master kecamatan.
     Route::apiResource('kecamatan', KecamatanController::class);
 
+    // ------------------------------------------------------------
+    // 2.4 DESA / KELURAHAN
+    // ------------------------------------------------------------
+    // 2.4.1 Mengelola CRUD master desa atau kelurahan.
+    Route::apiResource('desa-kelurahan', DesaKelurahanController::class)->parameters(['desa-kelurahan' => 'desaKelurahan']);
+
+    // ------------------------------------------------------------
+    // 2.5 BOUNDARY LOOKUP (GEOSPATIAL POLYGON)
+    // ------------------------------------------------------------
+    // 2.5.1 Lookup polygon GeoJSON untuk wilayah berdasarkan level dan kode.
+    Route::get('boundary-lookup', [BoundaryLookupController::class, 'lookup']);
+
     // ============================================================
     // BAB 3. PROYEK DAN DATA ANALISIS
     // Mendukung pengelolaan proyek serta data dasar analisis valuasi.
@@ -125,6 +146,7 @@ Route::prefix('v1')->group(function (): void {
     // 3.1 PROYEK
     // ------------------------------------------------------------
     // 3.1.1 Mengelola CRUD proyek analisis valuasi.
+    Route::get('proyek/next-code', [ProyekController::class, 'nextCode']);
     Route::apiResource('proyek', ProyekController::class);
 
     // ------------------------------------------------------------

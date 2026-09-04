@@ -26,6 +26,11 @@ class ValuationSeeder extends Seeder
 
         $idProyek = $proyek->id_proyek;
 
+        if (DB::table('project_valuation_settings')->where('id_proyek', $idProyek)->exists()) {
+            $this->command->info('Data valuasi sudah terisi. ValuationSeeder dilewati.');
+            return;
+        }
+
         // 1. Project Valuation Settings
         DB::table('project_valuation_settings')->insert([
             'id_proyek' => $idProyek,

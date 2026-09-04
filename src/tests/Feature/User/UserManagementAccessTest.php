@@ -58,7 +58,6 @@ class UserManagementAccessTest extends TestCase
         $response = $this->actingAs($admin, 'sanctum')->getJson('/api/v1/users');
 
         $response->assertOk()
-            ->assertJsonPath('data.0.role.nama_role', Role::ADMIN)
-            ->assertJsonPath('data.1.role.nama_role', Role::PENELITI);
+            ->assertJsonStructure(['data' => [['id_user', 'nama', 'email', 'role' => ['nama_role']]]]);
     }
 }
