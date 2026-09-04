@@ -20,7 +20,20 @@ class ProyekController extends ApiResourceController
 
     public function index(Request $request)
     {
-        return $this->indexResource($request);
+        $user = $request->user() ?? $request->user('sanctum') ?? auth('sanctum')->user();
+        $query = Proyek::query()->with(['provinsi', 'kabupatenKota', 'kecamatan', 'desaKelurahan']);
+
+        if ($user) {
+            $roleName = $user->role ? \App\Models\Role::normalize($user->role->nama_role) : null;
+            if ($roleName === \App\Models\Role::PENELITI) {
+                $query->where('id_user', $user->id_user);
+            }
+        }
+
+        $validated = $request->validate(['per_page' => ['nullable', 'integer', 'min:1', 'max:100']]);
+        $perPage = $validated['per_page'] ?? 15;
+
+        return ProyekResource::collection($query->paginate($perPage));
     }
 
     public function nextCode(): \Illuminate\Http\JsonResponse
@@ -82,23 +95,50 @@ class ProyekController extends ApiResourceController
         return 'PROJ-' . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
     }
 
-    public function show(Proyek $proyek)
+    public function show(Request $request, Proyek $proyek)
     {
+        $user = $request->user() ?? $request->user('sanctum') ?? auth('sanctum')->user();
+        if ($user) {
+            $roleName = $user->role ? \App\Models\Role::normalize($user->role->nama_role) : null;
+            if ($roleName === \App\Models\Role::PENELITI && (int) $proyek->id_user !== (int) $user->id_user) {
+                return response()->json(['message' => 'Anda tidak memiliki akses ke proyek ini.'], 403);
+            }
+        }
+
         $proyek->load(['provinsi', 'kabupatenKota', 'kecamatan', 'desaKelurahan']);
         return $this->showResource($proyek);
     }
 
     public function update(ProyekRequest $request, Proyek $proyek)
     {
-        $proyek->update($this->attributesWithoutFiles($request));
+        $user = $request->user() ?? $request->user('sanctum') ?? auth('sanctum')->user();
+        if ($user) {
+            $roleName = $user->role ? \App\Models\Role::normalize($user->role->nama_role) : null;
+            if ($roleName === \App\Models\Role::PENELITI && (int) $proyek->id_user !== (int) $user->id_user) {
+                return response()->json(['message' => 'Anda tidak memiliki akses untuk mengubah proyek ini.'], 403);
+            }
+        }
+
+        $payload = $this->attributesWithoutFiles($request);
+        unset($payload['id_user']);
+
+        $proyek->update($payload);
         $this->storeUploadedFiles($request, $proyek);
         $proyek->load(['provinsi', 'kabupatenKota', 'kecamatan', 'desaKelurahan']);
 
         return new ProyekResource($proyek->refresh());
     }
 
-    public function destroy(Proyek $proyek)
+    public function destroy(Request $request, Proyek $proyek)
     {
+        $user = $request->user() ?? $request->user('sanctum') ?? auth('sanctum')->user();
+        if ($user) {
+            $roleName = $user->role ? \App\Models\Role::normalize($user->role->nama_role) : null;
+            if ($roleName === \App\Models\Role::PENELITI && (int) $proyek->id_user !== (int) $user->id_user) {
+                return response()->json(['message' => 'Anda tidak memiliki akses untuk menghapus proyek ini.'], 403);
+            }
+        }
+
         foreach ($proyek->indexes as $index) {
             \Illuminate\Support\Facades\DB::table('jenis_tutupan_lahan')->where('id_index', $index->id_index)->delete();
             $index->delete();

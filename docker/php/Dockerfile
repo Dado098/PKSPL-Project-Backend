@@ -26,3 +26,14 @@ RUN docker-php-ext-install \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
+
+# Copy composer definition files and install dependencies in image layer
+COPY src/composer.json src/composer.lock /var/www/html/
+RUN composer install --no-interaction --prefer-dist --no-scripts
+
+# Add entrypoint script (strip Windows CRLF line endings for safety)
+COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["php-fpm"]

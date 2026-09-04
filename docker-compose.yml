@@ -10,10 +10,10 @@ services:
       - .env.docker
     volumes:
       - ./src:/var/www/html
+      - vendor-volume:/var/www/html/vendor
     depends_on:
       postgres:
         condition: service_healthy
-    command: sh -c "chmod -R 0777 /var/www/html/storage /var/www/html/bootstrap/cache && php-fpm"
     networks:
       - pkspl-network
 
@@ -27,13 +27,14 @@ services:
       - .env.docker
     volumes:
       - ./src:/var/www/html
+      - vendor-volume:/var/www/html/vendor
     depends_on:
       app:
         condition: service_started
       postgres:
         condition: service_healthy
     restart: unless-stopped
-    command: sh -c "php artisan queue:work --queue=default --tries=3 --timeout=90 --sleep=3"
+    command: ["php", "artisan", "queue:work", "--queue=default", "--tries=3", "--timeout=90", "--sleep=3"]
     networks:
       - pkspl-network
 
@@ -98,6 +99,7 @@ services:
 
 volumes:
   postgres-data:
+  vendor-volume:
 
 networks:
   pkspl-network:

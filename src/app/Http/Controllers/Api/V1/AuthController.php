@@ -8,11 +8,13 @@ use App\Http\Requests\AuthRegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\VerifyEmailNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -105,6 +107,7 @@ class AuthController extends Controller
             ->first();
 
         $accountCreated = false;
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
 
         if (! $user) {
             $guestRole = $this->findRoleByName(Role::GUEST);
@@ -123,11 +126,33 @@ class AuthController extends Controller
                 'google_id' => $socialUser['sub'] ?? null,
                 'foto' => $socialUser['picture'] ?? null,
                 'status' => 'Aktif',
+                'email_verified_at' => null, // New Google accounts require email verification
             ]);
 
             $accountCreated = true;
+
+            // Send email verification to Mailpit for new Google user
+            try {
+                $user->notify(new VerifyEmailNotification());
+            } catch (\Exception $e) {
+                Log::error('Failed sending verification email to Google user: ' . $e->getMessage());
+            }
+
+            return redirect()->away($frontendUrl . '/auth/callback?' . http_build_query([
+                'requires_verification' => '1',
+                'email' => $user->email,
+            ]));
         }
 
+        // If existing user is NOT verified, block login and redirect to verification notice
+        if (! $user->hasVerifiedEmail()) {
+            return redirect()->away($frontendUrl . '/auth/callback?' . http_build_query([
+                'requires_verification' => '1',
+                'email' => $user->email,
+            ]));
+        }
+
+        // Existing user is verified -> proceed with Google Login normally
         $user->update([
             'google_id' => $socialUser['sub'] ?? $user->google_id,
             'foto' => $socialUser['picture'] ?? $user->foto,
@@ -136,7 +161,6 @@ class AuthController extends Controller
         $user->load('role');
 
         $token = $user->createToken('auth-token')->plainTextToken;
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
 
         return redirect()->away($frontendUrl . '/auth/callback?' . http_build_query([
             'token' => $token,
@@ -158,19 +182,32 @@ class AuthController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        // codingan untuk menyimpan user baru ke database.
+        $nama = trim((string) $request->input('nama'));
+        $email = strtolower(trim((string) $request->input('email')));
+        $password = (string) $request->input('password');
+
+        // codingan untuk menyimpan user baru ke database sebagai Guest unverified.
         $user = User::query()->create([
             'id_role' => $guestRole->id_role,
-            'nama' => $request->input('nama'),
-            'email' => $request->input('email'),
-            'password' => Hash::make($request->input('password')),
+            'nama' => $nama,
+            'email' => $email,
+            'password' => Hash::make($password),
             'status' => 'Aktif',
+            'email_verified_at' => null,
         ]);
 
+        // Send Email Verification notification to Mailpit
+        try {
+            $user->notify(new VerifyEmailNotification());
+        } catch (\Exception $e) {
+            Log::error('Failed sending verification email: ' . $e->getMessage());
+        }
+
         return response()->json([
+            'message' => 'Registrasi berhasil. Silakan cek email Anda untuk melakukan verifikasi.',
+            'requires_verification' => true,
+            'email' => $user->email,
             'user' => new UserResource($user),
-            'access_token' => $user->createToken('auth-token')->plainTextToken,
-            'token_type' => 'Bearer',
         ], Response::HTTP_CREATED);
     }
 
@@ -179,22 +216,41 @@ class AuthController extends Controller
      */
     public function login(AuthLoginRequest $request): JsonResponse
     {
-        $identity = $request->input('identity');
-        $password = $request->input('password');
+        $identity = trim((string) $request->input('identity'));
+        $password = (string) $request->input('password');
 
         // codingan untuk mengambil user Aktif sesuai email atau nama.
         $query = User::query()->where('status', 'Aktif');
 
         if (filter_var($identity, FILTER_VALIDATE_EMAIL) !== false) {
-            $query->whereRaw('LOWER(email) = ?', [strtolower(trim($identity))]);
+            $query->whereRaw('LOWER(email) = ?', [strtolower($identity)]);
         } else {
-            $query->whereRaw('LOWER(nama) = ?', [strtolower(trim($identity))]);
+            $query->whereRaw('LOWER(nama) = ?', [strtolower($identity)]);
         }
 
         $user = $query->first();
 
-        if (! $user || ! Hash::check($password, $user->password)) {
+        if (! $user) {
             return response()->json(['message' => 'Invalid login credentials.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (! Hash::check($password, $user->password)) {
+            if (! empty($user->google_id)) {
+                return response()->json([
+                    'message' => "Akun ini terdaftar melalui Google. Silakan masuk menggunakan tombol 'Sign in with Google' atau atur password manual melalui menu Profil.",
+                ], Response::HTTP_UNAUTHORIZED);
+            }
+
+            return response()->json(['message' => 'Invalid login credentials.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Check if email has been verified
+        if (! $user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Email Anda belum diverifikasi. Silakan cek email Anda untuk mengaktifkan akun.',
+                'requires_verification' => true,
+                'email' => $user->email,
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         $user->load('role');
@@ -204,6 +260,74 @@ class AuthController extends Controller
             'user' => new UserResource($user),
             'access_token' => $user->createToken('auth-token')->plainTextToken,
             'token_type' => 'Bearer',
+        ]);
+    }
+
+    /**
+     * Verifikasi email pengguna melalui signed URL.
+     */
+    public function verifyEmail(Request $request, $id, $hash): JsonResponse
+    {
+        if (! URL::hasValidSignature($request)) {
+            return response()->json([
+                'message' => 'Link verifikasi tidak valid atau telah kedaluwarsa.',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = User::query()->find($id);
+
+        if (! $user || ! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+            return response()->json([
+                'message' => 'Link verifikasi tidak valid.',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Email sudah terverifikasi sebelumnya.',
+                'user' => new UserResource($user),
+            ]);
+        }
+
+        $user->markEmailAsVerified();
+
+        return response()->json([
+            'message' => 'Email berhasil diverifikasi! Silakan login.',
+            'user' => new UserResource($user),
+        ]);
+    }
+
+    /**
+     * Mengirim ulang email verifikasi.
+     */
+    public function resendVerificationEmail(Request $request): JsonResponse
+    {
+        $email = strtolower(trim((string) $request->input('email')));
+
+        if (! $email) {
+            return response()->json(['message' => 'Email wajib diisi.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = User::query()->whereRaw('LOWER(email) = ?', [$email])->first();
+
+        if (! $user) {
+            return response()->json(['message' => 'Email tidak ditemukan.'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email ini sudah terverifikasi.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $user->notify(new VerifyEmailNotification());
+        } catch (\Exception $e) {
+            Log::error('Failed resending verification email: ' . $e->getMessage());
+
+            return response()->json(['message' => 'Gagal mengirim email verifikasi.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return response()->json([
+            'message' => 'Link verifikasi baru telah dikirim ke email Anda. Silakan cek Inbox / Mailpit.',
         ]);
     }
 

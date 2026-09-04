@@ -55,6 +55,10 @@ Route::prefix('v1')->group(function (): void {
     // 1.1.4 Membuat sesi untuk pengguna yang berhasil masuk.
     Route::post('auth/login', [AuthController::class, 'login']);
 
+    // 1.1.5 Verifikasi Email dan kirim ulang.
+    Route::get('auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
+    Route::post('auth/email/resend', [AuthController::class, 'resendVerificationEmail']);
+
     // 1.1.5 Endpoint sesi yang memerlukan autentikasi Sanctum.
     Route::middleware('auth:sanctum')->group(function (): void {
         // 1.1.5.1 Mengakhiri sesi pengguna terautentikasi.
@@ -148,15 +152,17 @@ Route::prefix('v1')->group(function (): void {
     // ------------------------------------------------------------
     // 3.1 PROYEK
     // ------------------------------------------------------------
-    // 3.1.1 Mengelola CRUD proyek analisis valuasi.
-    Route::get('proyek/next-code', [ProyekController::class, 'nextCode']);
-    Route::apiResource('proyek', ProyekController::class);
+    // 3.1.1 Mengelola CRUD proyek analisis valuasi dengan proteksi Sanctum.
+    Route::middleware('auth:sanctum')->group(function (): void {
+        Route::get('proyek/next-code', [ProyekController::class, 'nextCode']);
+        Route::apiResource('proyek', ProyekController::class);
 
-    // ------------------------------------------------------------
-    // 3.2 DASHBOARD PROYEK
-    // ------------------------------------------------------------
-    // 3.2.1 Menyajikan ringkasan untuk proyek pada parameter {proyek}.
-    Route::get('proyek/{proyek}/dashboard', ProyekDashboardController::class);
+        // ------------------------------------------------------------
+        // 3.2 DASHBOARD PROYEK
+        // ------------------------------------------------------------
+        // 3.2.1 Menyajikan ringkasan untuk proyek pada parameter {proyek}.
+        Route::get('proyek/{proyek}/dashboard', ProyekDashboardController::class);
+    });
 
     // ------------------------------------------------------------
     // 3.3 INDEKS

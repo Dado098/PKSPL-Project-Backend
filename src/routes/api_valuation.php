@@ -21,6 +21,5 @@ Route::prefix('v1')->group(function (): void {
     Route::apiResource('costs', CostController::class);
 
     // 8.4 HASIL KALKULASI PROYEK (NPV, BCR, dll)
-    Route::get('proyek/{proyek}/economic-valuation', [ProjectValuationController::class, 'getResults']);
-    
+    Route::middleware('auth:sanctum')->get('proyek/{proyek}/economic-valuation', [ProjectValuationController::class, 'getResults']);
 });
