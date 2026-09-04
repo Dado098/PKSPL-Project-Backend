@@ -47,16 +47,28 @@ class ProyekController extends ApiResourceController
     {
         $payload = $this->attributesWithoutFiles($request);
 
+        $requestedCode = strtoupper(trim((string) $request->input('kode_proyek', '')));
+        if ($requestedCode && preg_match('/^PKS-[A-Z0-9]{6}$/', $requestedCode)) {
+            $exists = \Illuminate\Support\Facades\DB::table('proyek')->where('kode_proyek', $requestedCode)->exists();
+            if (!$exists) {
+                $payload['kode_proyek'] = $requestedCode;
+            } else {
+                $payload['kode_proyek'] = self::generateNextKodeProyek();
+            }
+        } else {
+            $payload['kode_proyek'] = self::generateNextKodeProyek();
+        }
+
         $maxAttempts = 5;
         $proyek = null;
 
         for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
             try {
-                $payload['kode_proyek'] = self::generateNextKodeProyek();
                 $proyek = Proyek::query()->create($payload);
                 break;
             } catch (\Illuminate\Database\QueryException $e) {
                 if ($attempt < $maxAttempts - 1 && (str_contains($e->getMessage(), 'kode_proyek') || $e->getCode() == '23505')) {
+                    $payload['kode_proyek'] = self::generateNextKodeProyek();
                     continue;
                 }
                 throw $e;
@@ -70,29 +82,15 @@ class ProyekController extends ApiResourceController
 
     public static function generateNextKodeProyek(): string
     {
-        $allCodes = \Illuminate\Support\Facades\DB::table('proyek')
-            ->whereNotNull('kode_proyek')
-            ->pluck('kode_proyek');
-
-        $maxNumber = 0;
-
-        foreach ($allCodes as $code) {
-            if (preg_match('/PROJ-(\d+)/i', $code, $matches)) {
-                $num = (int) $matches[1];
-                if ($num > $maxNumber) {
-                    $maxNumber = $num;
-                }
+        $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        do {
+            $code = 'PKS-';
+            for ($i = 0; $i < 6; $i++) {
+                $code .= $characters[random_int(0, strlen($characters) - 1)];
             }
-        }
+        } while (\Illuminate\Support\Facades\DB::table('proyek')->where('kode_proyek', $code)->exists());
 
-        if ($maxNumber === 0) {
-            $maxId = (int) \Illuminate\Support\Facades\DB::table('proyek')->max('id_proyek');
-            $maxNumber = max($maxId, 0);
-        }
-
-        $nextNumber = $maxNumber + 1;
-
-        return 'PROJ-' . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
+        return $code;
     }
 
     public function show(Request $request, Proyek $proyek)
@@ -121,6 +119,7 @@ class ProyekController extends ApiResourceController
 
         $payload = $this->attributesWithoutFiles($request);
         unset($payload['id_user']);
+        unset($payload['kode_proyek']);
 
         $proyek->update($payload);
         $this->storeUploadedFiles($request, $proyek);
