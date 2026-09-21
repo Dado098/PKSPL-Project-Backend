@@ -12,6 +12,7 @@ class IndexResource extends JsonResource
         return [
             'id_index' => $this->id_index,
             'id_proyek' => $this->id_proyek,
+            'proyek' => new ProyekResource($this->whenLoaded('proyek')),
             'nama_index' => $this->nama_index,
             'kode_index' => $this->kode_index,
             'luas' => $this->luas,

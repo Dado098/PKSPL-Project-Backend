@@ -17,7 +17,17 @@ class IndexController extends ApiResourceController
 
     public function index(Request $request)
     {
-        return $this->indexResource($request);
+        $validated = $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'id_proyek' => ['nullable', 'integer', 'exists:proyek,id_proyek'],
+        ]);
+
+        $query = Index::query()->with('jenisTutupanLahan');
+        if (! empty($validated['id_proyek'])) {
+            $query->where('id_proyek', $validated['id_proyek']);
+        }
+
+        return IndexResource::collection($query->paginate($validated['per_page'] ?? 15));
     }
 
     public function store(IndexRequest $request)
@@ -27,6 +37,7 @@ class IndexController extends ApiResourceController
 
     public function show(Index $index)
     {
+        $index->load('jenisTutupanLahan');
         return $this->showResource($index);
     }
 

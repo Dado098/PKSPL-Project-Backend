@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -25,6 +26,24 @@ abstract class ApiResourceController extends Controller
         $validated = $request->validate(['per_page' => ['nullable', 'integer', 'min:1', 'max:100']]);
 
         return $this->resource::collection($this->model::query()->paginate($validated['per_page'] ?? 15));
+    }
+
+    /** Menampilkan resource paginasi beserta relasi yang dibutuhkan response. */
+    protected function indexResourceWithRelations(Request $request, array $relations, ?string $projectRelation = null): AnonymousResourceCollection
+    {
+        $validated = $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'id_proyek' => ['nullable', 'integer', 'exists:proyek,id_proyek'],
+        ]);
+
+        $query = $this->model::query()->with($relations);
+        if ($projectRelation && isset($validated['id_proyek'])) {
+            $query->whereHas($projectRelation, fn (Builder $relation) => $relation->where('id_proyek', $validated['id_proyek']));
+        }
+
+        return $this->resource::collection(
+            $query->paginate($validated['per_page'] ?? 15)
+        );
     }
 
     /** Membentuk response untuk satu model. */

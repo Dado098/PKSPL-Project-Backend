@@ -19,6 +19,8 @@ class ProvisioningServiceRequest extends FormRequest
         return [
             'id_jenis_tutupan_lahan' => [$required, 'integer', 'exists:jenis_tutupan_lahan,id_jenis_tutupan_lahan'],
             'nama_objek' => [$required, 'string', 'max:150'],
+            'nama_latin' => ['nullable', 'string', 'max:150'],
+            'nama_daerah' => ['nullable', 'string', 'max:150'],
             'produktivitas' => [$required, 'numeric', 'decimal:0,4'],
             'harga_pasar' => [$required, 'numeric', 'decimal:0,2'],
             'luas_pemanfaatan' => [$required, 'numeric', 'decimal:0,2'],

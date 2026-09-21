@@ -16,9 +16,9 @@ class ProvisioningServiceController extends ApiResourceController
     protected string $resource = ProvisioningServiceResource::class;
 
     // Meneruskan operasi CRUD ke helper dengan request yang sudah tervalidasi.
-    public function index(Request $request) { return $this->indexResource($request); }
+    public function index(Request $request) { return $this->indexResourceWithRelations($request, ['jenisTutupanLahan.index.proyek', 'provinsi', 'kabupatenKota', 'kecamatan', 'desaKelurahan'], 'jenisTutupanLahan.index'); }
     public function store(ProvisioningServiceRequest $request) { $payload = $request->validated(); $payload['kategori_tev'] = $payload['kategori_tev'] ?? 'DUV'; return $this->storeResource($payload); }
-    public function show(ProvisioningService $provisioningService) { return $this->showResource($provisioningService); }
+    public function show(ProvisioningService $provisioningService) { return $this->showResource($provisioningService->load(['provinsi', 'kabupatenKota', 'kecamatan', 'desaKelurahan'])); }
     public function update(ProvisioningServiceRequest $request, ProvisioningService $provisioningService) { $payload = $request->validated(); $payload['kategori_tev'] = $payload['kategori_tev'] ?? 'DUV'; return $this->updateResource($provisioningService, $payload); }
     public function destroy(ProvisioningService $provisioningService) { return $this->destroyResource($provisioningService); }
 }

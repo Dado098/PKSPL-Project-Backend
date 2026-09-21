@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
             IndexSeeder::class,
             JenisTutupanLahanSeeder::class,
             ReferensiSeeder::class,
-            JasaEkosistemSeeder::class,
+            DataMasterSeeder::class,
             ProsesAnalisisSeeder::class,
             // Review & Discussion Module (additive)
             ReviewSeeder::class,

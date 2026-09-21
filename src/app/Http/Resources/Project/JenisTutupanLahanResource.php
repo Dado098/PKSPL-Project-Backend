@@ -18,6 +18,7 @@ class JenisTutupanLahanResource extends JsonResource
             'satuan_luas' => $this->satuan_luas,
             'geometry' => $this->geometry,
             'deskripsi' => $this->deskripsi,
+            'index' => new IndexResource($this->whenLoaded('index')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
