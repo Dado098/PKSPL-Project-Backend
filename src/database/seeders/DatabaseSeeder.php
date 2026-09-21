@@ -35,6 +35,8 @@ class DatabaseSeeder extends Seeder
             ReviewSeeder::class,
             // Valuation Module
             ValuationSeeder::class,
+            // Valuasi Ekonomi Ekosistem (TEV)
+            EkosistemValuasiSeeder::class,
         ]);
     }
 }
