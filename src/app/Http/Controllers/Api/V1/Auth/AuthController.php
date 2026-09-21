@@ -5,15 +5,19 @@ namespace App\Http\Controllers\Api\V1\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AuthLoginRequest;
 use App\Http\Requests\Auth\AuthRegisterRequest;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Resources\User\UserResource;
 use App\Models\Role;
 use App\Models\User;
 use App\Notifications\VerifyEmailNotification;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
@@ -155,7 +159,9 @@ class AuthController extends Controller
         // Existing user is verified -> proceed with Google Login normally
         $user->update([
             'google_id' => $socialUser['sub'] ?? $user->google_id,
-            'foto' => $socialUser['picture'] ?? $user->foto,
+            'foto' => !empty($socialUser['picture']) ? $socialUser['picture'] : $user->foto,
+            'last_online_at' => now(),
+            'last_seen_at' => now(),
         ]);
 
         $user->load('role');
@@ -231,17 +237,11 @@ class AuthController extends Controller
         $user = $query->first();
 
         if (! $user) {
-            return response()->json(['message' => 'Invalid login credentials.'], Response::HTTP_UNAUTHORIZED);
+            return response()->json(['message' => 'Kombinasi email dan password salah.'], Response::HTTP_UNAUTHORIZED);
         }
 
         if (! Hash::check($password, $user->password)) {
-            if (! empty($user->google_id)) {
-                return response()->json([
-                    'message' => "Akun ini terdaftar melalui Google. Silakan masuk menggunakan tombol 'Sign in with Google' atau atur password manual melalui menu Profil.",
-                ], Response::HTTP_UNAUTHORIZED);
-            }
-
-            return response()->json(['message' => 'Invalid login credentials.'], Response::HTTP_UNAUTHORIZED);
+            return response()->json(['message' => 'Kombinasi email dan password salah.'], Response::HTTP_UNAUTHORIZED);
         }
 
         // Check if email has been verified
@@ -250,9 +250,13 @@ class AuthController extends Controller
                 'message' => 'Email Anda belum diverifikasi. Silakan cek email Anda untuk mengaktifkan akun.',
                 'requires_verification' => true,
                 'email' => $user->email,
-            ], Response::HTTP_UNAUTHORIZED);
+            ], Response::HTTP_FORBIDDEN);
         }
 
+        $user->update([
+            'last_online_at' => now(),
+            'last_seen_at' => now(),
+        ]);
         $user->load('role');
 
         // codingan untuk menghasilkan token akses Sanctum jika login berhasil.
@@ -332,32 +336,127 @@ class AuthController extends Controller
     }
 
     /**
+     * Mengirim link reset password ke email pengguna (Generic response untuk mencegah user enumeration).
+     */
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    {
+        $email = strtolower(trim((string) $request->input('email')));
+
+        $status = Password::broker()->sendResetLink(['email' => $email]);
+
+        if ($status === Password::RESET_THROTTLED) {
+            return response()->json([
+                'message' => 'Terlalu banyak permintaan. Harap tunggu beberapa saat sebelum mencoba lagi.',
+            ], Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
+        // Response generik untuk mencegah user enumeration (Requirement 7 & 14)
+        return response()->json([
+            'message' => 'Jika email terdaftar, link reset password telah dikirim.',
+        ]);
+    }
+
+    /**
+     * Mereset password pengguna dengan memvalidasi token dan mengupdate password.
+     */
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $credentials = [
+            'email' => strtolower(trim((string) $request->input('email'))),
+            'password' => (string) $request->input('password'),
+            'password_confirmation' => (string) $request->input('password_confirmation'),
+            'token' => (string) $request->input('token'),
+        ];
+
+        $status = Password::broker()->reset(
+            $credentials,
+            function (User $user, string $password) {
+                // Direct assignment: model cast 'password' => 'hashed' akan meng-hash password SATU KALI.
+                $user->password = $password;
+                $user->setRememberToken(Str::random(60));
+                $user->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        switch ($status) {
+            case Password::PASSWORD_RESET:
+                return response()->json([
+                    'message' => 'Password berhasil diubah. Silakan login menggunakan password baru Anda.',
+                ]);
+
+            case Password::INVALID_TOKEN:
+                return response()->json([
+                    'message' => 'Link reset password tidak valid atau sudah kedaluwarsa.',
+                ], Response::HTTP_BAD_REQUEST);
+
+            case Password::INVALID_USER:
+                return response()->json([
+                    'message' => 'Link reset password tidak valid.',
+                ], Response::HTTP_BAD_REQUEST);
+
+            case Password::RESET_THROTTLED:
+                return response()->json([
+                    'message' => 'Terlalu banyak percobaan. Harap tunggu beberapa saat sebelum mencoba lagi.',
+                ], Response::HTTP_TOO_MANY_REQUESTS);
+
+            default:
+                return response()->json([
+                    'message' => 'Gagal mengatur ulang password.',
+                ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    /**
      * codingan untuk logout dan menghapus token akses aktif.
      */
     public function logout(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        if ($user && $user->currentAccessToken()) {
-            $user->currentAccessToken()->delete();
+        if ($user) {
+            $user->update(['last_seen_at' => null]);
+
+            if ($user->currentAccessToken()) {
+                $user->currentAccessToken()->delete();
+            }
         }
 
         return response()->json([], Response::HTTP_NO_CONTENT);
     }
 
     /**
-     * Mengembalikan data user yang sedang login.
+     * Mengembalikan data user yang sedang login dan memperbarui last_seen_at.
      */
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
 
         if ($user) {
+            $user->update(['last_seen_at' => now()]);
             $user->load('role');
         }
 
         return response()->json([
             'user' => $user ? new UserResource($user) : null,
+        ]);
+    }
+
+    /**
+     * Memperbarui timestamp aktivitas terakhir (presence heartbeat) user yang sedang login.
+     */
+    public function heartbeat(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user) {
+            $user->update(['last_seen_at' => now()]);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'last_seen_at' => $user?->last_seen_at,
         ]);
     }
 }

@@ -33,6 +33,7 @@ class UserSeeder extends Seeder
                     'nama' => $nama,
                     'password' => Hash::make('password'),
                     'status' => 'Aktif',
+                    'email_verified_at' => now(),
                 ]
             );
         }

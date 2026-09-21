@@ -59,7 +59,11 @@ Route::prefix('v1')->group(function (): void {
     Route::get('auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
     Route::post('auth/email/resend', [AuthController::class, 'resendVerificationEmail']);
 
-    // 1.1.5 Endpoint sesi yang memerlukan autentikasi Sanctum.
+    // 1.1.6 Fitur Lupa Password dan Reset Password
+    Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('auth/reset-password', [AuthController::class, 'resetPassword']);
+
+    // 1.1.7 Endpoint sesi yang memerlukan autentikasi Sanctum.
     Route::middleware('auth:sanctum')->group(function (): void {
         // 1.1.5.1 Mengakhiri sesi pengguna terautentikasi.
         Route::post('auth/logout', [AuthController::class, 'logout']);
@@ -72,6 +76,9 @@ Route::prefix('v1')->group(function (): void {
 
         // 1.1.5.4 Mengubah password pengguna terautentikasi.
         Route::post('profile/password', [ProfileController::class, 'updatePassword']);
+
+        // 1.1.5.5 Memperbarui status kehadiran (heartbeat) pengguna terautentikasi.
+        Route::post('profile/presence', [AuthController::class, 'heartbeat']);
     });
 
     // ------------------------------------------------------------

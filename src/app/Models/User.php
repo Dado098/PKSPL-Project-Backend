@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,7 +20,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $primaryKey = 'id_user';
 
-    protected $fillable = ['id_role', 'nama', 'email', 'password', 'google_id', 'foto', 'status', 'email_verified_at'];
+    protected $fillable = ['id_role', 'nama', 'email', 'password', 'google_id', 'foto', 'status', 'email_verified_at', 'last_online_at', 'last_seen_at'];
 
     protected $hidden = ['password', 'remember_token', 'google_id'];
 
@@ -29,11 +30,21 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'password' => 'hashed',
         'email_verified_at' => 'datetime',
+        'last_online_at' => 'datetime',
+        'last_seen_at' => 'datetime',
     ];
 
     public function getRouteKeyName(): string
     {
         return 'id_user';
+    }
+
+    /**
+     * Send password reset notification using custom PKSPL notification.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     /**
