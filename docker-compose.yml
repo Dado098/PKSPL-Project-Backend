@@ -38,6 +38,30 @@ services:
     networks:
       - pkspl-network
 
+  reverb:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: pkspl-reverb
+    working_dir: /var/www/html
+    env_file:
+      - .env.docker
+    volumes:
+      - ./src:/var/www/html
+      - vendor-volume:/var/www/html/vendor
+    ports:
+      - "8085:8080"
+    depends_on:
+      app:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    networks:
+      - pkspl-network
+
+
   nginx:
     image: nginx:latest
     container_name: pkspl-nginx

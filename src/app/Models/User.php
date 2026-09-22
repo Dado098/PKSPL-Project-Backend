@@ -6,7 +6,9 @@ use App\Notifications\ResetPasswordNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -90,5 +92,29 @@ class User extends Authenticatable implements MustVerifyEmail
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class, 'id_user', 'id_user');
+    }
+
+    // ===== Chat & Messaging Module (additive) =====
+
+    public function conversations(): BelongsToMany
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_participants', 'id_user', 'id_conversation')
+            ->withPivot('joined_at', 'last_read_at')
+            ->withTimestamps();
+    }
+
+    public function conversationParticipants(): HasMany
+    {
+        return $this->hasMany(ConversationParticipant::class, 'id_user', 'id_user');
+    }
+
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class, 'id_sender', 'id_user');
+    }
+
+    public function notificationPreference(): HasOne
+    {
+        return $this->hasOne(NotificationPreference::class, 'id_user', 'id_user');
     }
 }

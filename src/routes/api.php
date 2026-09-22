@@ -299,3 +299,7 @@ require __DIR__ . '/api_review.php';
 
 // BAB 8 didefinisikan dalam berkas terpisah untuk modul valuasi ekonomi terintegrasi.
 require __DIR__ . '/api_valuation.php';
+
+// BAB 9 didefinisikan dalam berkas terpisah untuk sistem chat dan diskusi interaktif.
+require __DIR__ . '/api_chat.php';
+

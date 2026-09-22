@@ -37,6 +37,8 @@ class DatabaseSeeder extends Seeder
             ValuationSeeder::class,
             // Valuasi Ekonomi Ekosistem (TEV)
             EkosistemValuasiSeeder::class,
+            // Chat & Discussion Module (Analyst, Peneliti, Admin)
+            ChatSeeder::class,
         ]);
     }
 }
