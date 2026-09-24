@@ -21,6 +21,11 @@ class MessageAttachmentResource extends JsonResource
             $formattedSize = $bytes . ' B';
         }
 
+        $convId = $request->route('conversation')?->id_conversation ?? $this->message?->id_conversation;
+        $downloadUrl = ($convId && $this->id_message && $this->id_attachment)
+            ? url("/api/v1/conversations/{$convId}/messages/{$this->id_message}/attachments/{$this->id_attachment}/download")
+            : null;
+
         return [
             'id' => (string) $this->id_attachment,
             'id_attachment' => $this->id_attachment,
@@ -33,6 +38,8 @@ class MessageAttachmentResource extends JsonResource
             'mimeType' => $this->mime_type,
             'mime_type' => $this->mime_type,
             'url' => $this->url,
+            'downloadUrl' => $downloadUrl,
+            'download_url' => $downloadUrl,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

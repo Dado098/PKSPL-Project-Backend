@@ -45,4 +45,20 @@ class ChatDirectoryController extends Controller
 
         return ChatUserResource::collection($users);
     }
+
+    public function heartbeat(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $currentUser = $request->user();
+        if ($currentUser) {
+            $currentUser->update([
+                'last_seen_at' => now(),
+                'last_online_at' => now(),
+            ]);
+        }
+
+        return response()->json([
+            'is_online' => true,
+            'last_seen_at' => now()->toIso8601String(),
+        ]);
+    }
 }

@@ -49,6 +49,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\App\Models\Review::class, ReviewPolicy::class);
         Gate::policy(\App\Models\ReviewComment::class, ReviewCommentPolicy::class);
         Gate::policy(\App\Models\CommentAttachment::class, AttachmentPolicy::class);
+        Gate::policy(\App\Models\Conversation::class, \App\Policies\ConversationPolicy::class);
+        Gate::policy(\App\Models\ChatMessage::class, \App\Policies\ChatMessagePolicy::class);
     }
 }
 

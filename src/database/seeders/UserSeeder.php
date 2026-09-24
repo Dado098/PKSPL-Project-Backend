@@ -8,7 +8,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * Mengisi akun contoh untuk setiap role aplikasi.
+ * Mengisi akun contoh untuk setiap role aplikasi PKSPL IPB University.
  */
 class UserSeeder extends Seeder
 {
@@ -17,13 +17,19 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        foreach ([
+        $users = [
             ['admin@gmail.com', 'Administrator PKSPL', Role::ADMIN],
             ['analyst@gmail.com', 'Analyst PKSPL', Role::ANALYST],
             ['peneliti@gmail.com', 'Bima Saputra', Role::PENELITI],
+            ['demo.retno@pkspl.ipb.ac.id', 'Dr. Ir. Retno Wulandari, M.Si.', Role::PENELITI],
+            ['demo.fauzi@pkspl.ipb.ac.id', 'Dr. Ahmad Fauzi, S.Kel., M.Sc.', Role::PENELITI],
+            ['demo.wayan@pkspl.ipb.ac.id', 'Prof. Dr. Wayan Sudarma, M.Env.', Role::PENELITI],
+            ['demo.siti@pkspl.ipb.ac.id', 'Dr. Siti Nurhaliza, M.Si.', Role::PENELITI],
+            ['demo.hendra@pkspl.ipb.ac.id', 'Dr. Hendra Gunawan, S.Kel., M.Si.', Role::PENELITI],
             ['guest@gmail.com', 'Tamu PKSPL', Role::GUEST],
-        ] as [$email, $nama, $role]) {
+        ];
 
+        foreach ($users as [$email, $nama, $role]) {
             User::query()->updateOrCreate(
                 ['email' => $email],
                 [

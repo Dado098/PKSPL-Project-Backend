@@ -21,9 +21,16 @@ class ProsesAnalisisSeeder extends Seeder
             DB::table('validasi_analyst')->updateOrInsert(['id_hasil' => $hasil, 'id_user' => $analyst], ['status_validasi' => 'Valid', 'metode_analisis' => 'Manual', 'catatan' => 'Data contoh telah diperiksa analyst.', 'tanggal_validasi' => now()]);
         }
 
+        $tipeList = ['Ringkasan', 'Rekomendasi', 'Prediksi'];
+        $pertanyaanList = [
+            'Apa manfaat utama ekosistem pada area ini?',
+            'Tindakan pengelolaan apa yang perlu diprioritaskan?',
+            'Bagaimana kecenderungan nilai ekonomi area ini?',
+        ];
+
         foreach (DB::table('proyek')->orderBy('id_proyek')->get() as $index => $proyek) {
-            $tipe = ['Ringkasan', 'Rekomendasi', 'Prediksi'][$index];
-            $pertanyaan = ['Apa manfaat utama ekosistem pada area ini?', 'Tindakan pengelolaan apa yang perlu diprioritaskan?', 'Bagaimana kecenderungan nilai ekonomi area ini?'][$index];
+            $tipe = $tipeList[$index % count($tipeList)];
+            $pertanyaan = $pertanyaanList[$index % count($pertanyaanList)];
             DB::table('analisis_ai')->updateOrInsert(['id_proyek' => $proyek->id_proyek, 'id_user' => $peneliti, 'pertanyaan' => $pertanyaan], ['jawaban' => 'Analisis contoh menggunakan data proyek, area terdampak, dan referensi yang tersedia.', 'sumber_data' => 'Knowledge Base Valuasi Ekosistem', 'tipe_analisis' => $tipe]);
             DB::table('histori')->updateOrInsert(['id_user' => $peneliti, 'id_proyek' => $proyek->id_proyek, 'aktivitas' => 'Membuat proyek valuasi'], ['keterangan' => 'Proyek contoh dibuat melalui proses seeding.']);
         }

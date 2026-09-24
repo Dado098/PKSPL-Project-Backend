@@ -14,18 +14,24 @@ class AdministrativeBoundarySeeder extends Seeder
      */
     public function run(): void
     {
-        $level3Count = AdministrativeBoundary::where('level', 3)->count();
+        try {
+            $level3Count = AdministrativeBoundary::where('level', 3)->count();
 
-        // If level 3 (kecamatan) boundaries are already populated (>= 6000 rows), skip import for speed
-        if ($level3Count >= 6000) {
-            $this->command->info("Administrative boundaries already populated ({$level3Count} kecamatan). Skipping re-import.");
-            return;
+            // If level 3 (kecamatan) boundaries are already populated (>= 6000 rows), skip import for speed
+            if ($level3Count >= 6000) {
+                $this->command?->info("Administrative boundaries already populated ({$level3Count} kecamatan). Skipping re-import.");
+                return;
+            }
+
+            $this->command?->info('Seeding administrative boundaries (Levels 1, 2, 3)...');
+            Artisan::call('boundaries:import', [
+                '--level' => [1, 2, 3],
+            ]);
+            if ($this->command) {
+                $this->command->info(Artisan::output());
+            }
+        } catch (\Throwable $e) {
+            $this->command?->warn('Skipping boundaries import due to network or environment constraint: ' . $e->getMessage());
         }
-
-        $this->command->info('Seeding administrative boundaries (Levels 1, 2, 3)...');
-        Artisan::call('boundaries:import', [
-            '--level' => [1, 2, 3],
-        ]);
-        $this->command->info(Artisan::output());
     }
 }

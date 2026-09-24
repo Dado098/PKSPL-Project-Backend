@@ -46,6 +46,8 @@ class ProyekController extends ApiResourceController
 
         $query = Proyek::query()
             ->with([
+                'user.role',
+                'areaTerdampak.ekosistem',
                 'provinsi',
                 'kabupatenKota',
                 'kecamatan',
@@ -60,10 +62,36 @@ class ProyekController extends ApiResourceController
             }
         }
 
+        // Pencarian dinamis berdasarkan nama proyek, kode proyek, atau nama peneliti
+        if ($request->filled('search')) {
+            $search = trim((string) $request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_proyek', 'ilike', "%{$search}%")
+                  ->orWhere('kode_proyek', 'ilike', "%{$search}%")
+                  ->orWhereHas('user', fn ($uq) => $uq->where('nama', 'ilike', "%{$search}%"));
+            });
+        }
+
+        // Filter status proyek jika disediakan
+        if ($request->filled('status') && !in_array($request->input('status'), ['all', 'Semua Status', 'SEMUA_STATUS', ''])) {
+            $statusInput = strtoupper((string) $request->input('status'));
+            $mappedStatus = match ($statusInput) {
+                'SIAP_REVIEW', 'SUBMITTED' => ['Submitted', 'Proses'],
+                'DALAM_REVIEW' => ['Proses'],
+                'REVISI', 'NEED_REVISION' => ['Need Revision'],
+                'SELESAI', 'APPROVED' => ['Selesai', 'Approved'],
+                'DRAFT' => ['Draft'],
+                default => [$request->input('status')],
+            };
+            $query->whereIn('status', $mappedStatus);
+        }
+
+        $query->orderBy('id_proyek', 'asc');
+
         $validated = $request->validate([
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
-        $perPage = $validated['per_page'] ?? 15;
+        $perPage = $validated['per_page'] ?? 50;
 
         return ProyekResource::collection($query->paginate($perPage));
     }
@@ -156,6 +184,8 @@ class ProyekController extends ApiResourceController
         }
 
         $proyek->load([
+            'user.role',
+            'areaTerdampak.ekosistem',
             'provinsi',
             'kabupatenKota',
             'kecamatan',

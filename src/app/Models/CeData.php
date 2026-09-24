@@ -43,3 +43,4 @@ class CeData extends Model
         return $this->belongsTo(ValuationModule::class, 'id_module', 'id_module');
     }
 }
+

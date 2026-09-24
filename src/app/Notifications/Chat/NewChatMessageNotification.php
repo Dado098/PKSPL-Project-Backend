@@ -55,10 +55,10 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
     public function toDatabase(object $notifiable): array
     {
         $senderRole = $this->sender->role?->nama_role ?? 'User';
-        $summary = Str::limit($this->message->message, 120);
-        if (empty($summary) && $this->message->attachments()->count() > 0) {
-            $summary = '📎 Mengirim lampiran berkas telaah.';
-        }
+        $hasAttachment = $this->message->attachments()->count() > 0;
+        $summary = $hasAttachment
+            ? "📎 {$this->sender->nama} mengirim berkas lampiran."
+            : "Pesan baru dari {$this->sender->nama}";
 
         return [
             'type' => 'chat_message',

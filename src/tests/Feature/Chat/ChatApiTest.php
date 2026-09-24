@@ -79,11 +79,14 @@ class ChatApiTest extends TestCase
 
         $response->assertStatus(201);
         $response->assertJsonPath('data.text', 'Halo Peneliti, mohon klarifikasi data mangrove.');
+        $msgId = (int) $response->json('data.id');
         $this->assertDatabaseHas('messages', [
             'id_conversation' => $convId,
             'id_sender' => $this->analyst->id_user,
-            'message' => 'Halo Peneliti, mohon klarifikasi data mangrove.',
         ]);
+        $rawDb = \Illuminate\Support\Facades\DB::table('messages')->where('id_message', $msgId)->value('message');
+        $this->assertNotEquals('Halo Peneliti, mohon klarifikasi data mangrove.', $rawDb);
+        $this->assertEquals('Halo Peneliti, mohon klarifikasi data mangrove.', ChatMessage::find($msgId)->message);
 
         Notification::assertSentTo($this->peneliti, \App\Notifications\Chat\NewChatMessageNotification::class);
     }
@@ -185,5 +188,402 @@ class ChatApiTest extends TestCase
 
         $updateResponse->assertStatus(200);
         $updateResponse->assertJsonPath('preferences.email_chat', false);
+    }
+
+    public function test_user_can_send_typing_indicator(): void
+    {
+        $convResponse = $this->actingAs($this->analyst)->postJson('/api/v1/conversations', [
+            'recipient_id' => $this->peneliti->id_user,
+        ]);
+        $convId = $convResponse->json('data.id');
+
+        $typingResponse = $this->actingAs($this->analyst)->postJson("/api/v1/conversations/{$convId}/typing", [
+            'is_typing' => true,
+        ]);
+        $typingResponse->assertStatus(200);
+        $typingResponse->assertJsonPath('success', true);
+        $typingResponse->assertJsonPath('is_typing', true);
+
+        // Anti-IDOR: unauthorized user cannot trigger typing in this conversation
+        $unauthorized = $this->thirdParty;
+        $unauthResponse = $this->actingAs($unauthorized)->postJson("/api/v1/conversations/{$convId}/typing", [
+            'is_typing' => true,
+        ]);
+        $unauthResponse->assertStatus(403);
+    }
+
+    public function test_user_can_send_heartbeat(): void
+    {
+        $analystRole = Role::firstOrCreate(['nama_role' => Role::ANALYST]);
+        $user = User::factory()->create(['id_role' => $analystRole->id_role]);
+
+        $response = $this->actingAs($user)->postJson('/api/v1/chat/heartbeat');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('is_online', true);
+        $this->assertNotNull($response->json('last_seen_at'));
+
+        $user->refresh();
+        $this->assertNotNull($user->last_seen_at);
+        $this->assertNotNull($user->last_online_at);
+    }
+
+    public function test_mark_read_broadcasts_messages_read_and_updates_status(): void
+    {
+        \Illuminate\Support\Facades\Event::fake([\App\Events\MessagesRead::class]);
+
+        $penelitiRole = Role::firstOrCreate(['nama_role' => Role::PENELITI]);
+        $analystRole = Role::firstOrCreate(['nama_role' => Role::ANALYST]);
+
+        $peneliti = User::factory()->create(['id_role' => $penelitiRole->id_role]);
+        $analyst = User::factory()->create(['id_role' => $analystRole->id_role]);
+
+        $conversation = Conversation::create([
+            'type' => 'direct',
+            'created_by' => $analyst->id_user,
+        ]);
+
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $analyst->id_user,
+            'joined_at' => now(),
+            'last_read_at' => now(),
+        ]);
+
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $peneliti->id_user,
+            'joined_at' => now(),
+            'last_read_at' => null,
+        ]);
+
+        // Analyst sends message
+        $msg = ChatMessage::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_sender' => $analyst->id_user,
+            'message' => 'Halo Peneliti',
+            'message_type' => 'text',
+        ]);
+
+        // Peneliti marks conversation as read
+        $readResponse = $this->actingAs($peneliti)->postJson("/api/v1/conversations/{$conversation->id_conversation}/read");
+        $readResponse->assertStatus(200);
+
+        \Illuminate\Support\Facades\Event::assertDispatched(\App\Events\MessagesRead::class, function ($event) use ($conversation, $peneliti) {
+            return (int) $event->conversationId === (int) $conversation->id_conversation
+                && (int) $event->readerId === (int) $peneliti->id_user;
+        });
+
+        // Fetch messages as Analyst and verify status is 'read'
+        $fetchResponse = $this->actingAs($analyst)->getJson("/api/v1/conversations/{$conversation->id_conversation}/messages");
+        $fetchResponse->assertStatus(200);
+        $fetchResponse->assertJsonPath('data.0.status', 'read');
+        $fetchResponse->assertJsonPath('data.0.isRead', true);
+    }
+
+    public function test_user_can_edit_own_message(): void
+    {
+        \Illuminate\Support\Facades\Event::fake([\App\Events\ChatMessageUpdated::class]);
+
+        $conversation = Conversation::create([
+            'type' => 'direct',
+            'created_by' => $this->analyst->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->analyst->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->peneliti->id_user,
+        ]);
+
+        $message = ChatMessage::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_sender' => $this->analyst->id_user,
+            'message' => 'Teks awal sebelum diedit',
+            'message_type' => 'text',
+        ]);
+
+        $response = $this->actingAs($this->analyst)->putJson(
+            "/api/v1/conversations/{$conversation->id_conversation}/messages/{$message->id_message}",
+            ['message' => 'Teks sudah direvisi']
+        );
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.message', 'Teks sudah direvisi');
+        $response->assertJsonPath('data.isEdited', true);
+
+        $this->assertDatabaseHas('messages', [
+            'id_message' => $message->id_message,
+        ]);
+        $rawDb = \Illuminate\Support\Facades\DB::table('messages')->where('id_message', $message->id_message)->value('message');
+        $this->assertNotEquals('Teks sudah direvisi', $rawDb);
+        $this->assertEquals('Teks sudah direvisi', ChatMessage::find($message->id_message)->message);
+
+        \Illuminate\Support\Facades\Event::assertDispatched(\App\Events\ChatMessageUpdated::class);
+    }
+
+    public function test_user_cannot_edit_other_user_message_forbidden(): void
+    {
+        $conversation = Conversation::create([
+            'type' => 'direct',
+            'created_by' => $this->analyst->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->analyst->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->peneliti->id_user,
+        ]);
+
+        $message = ChatMessage::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_sender' => $this->analyst->id_user,
+            'message' => 'Pesan asli analis',
+            'message_type' => 'text',
+        ]);
+
+        // Peneliti attempts to edit analyst's message
+        $response = $this->actingAs($this->peneliti)->putJson(
+            "/api/v1/conversations/{$conversation->id_conversation}/messages/{$message->id_message}",
+            ['message' => 'Pembajakan pesan']
+        );
+
+        $response->assertStatus(403);
+    }
+
+    public function test_user_can_delete_own_message_soft_deletes(): void
+    {
+        \Illuminate\Support\Facades\Event::fake([\App\Events\ChatMessageDeleted::class]);
+
+        $conversation = Conversation::create([
+            'type' => 'direct',
+            'created_by' => $this->analyst->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->analyst->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->peneliti->id_user,
+        ]);
+
+        $message = ChatMessage::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_sender' => $this->analyst->id_user,
+            'message' => 'Pesan yang akan dihapus',
+            'message_type' => 'text',
+        ]);
+
+        $response = $this->actingAs($this->analyst)->deleteJson(
+            "/api/v1/conversations/{$conversation->id_conversation}/messages/{$message->id_message}"
+        );
+
+        $response->assertStatus(200);
+
+        // Soft deleted in DB (deleted_at not null)
+        $this->assertSoftDeleted('messages', ['id_message' => $message->id_message]);
+
+        \Illuminate\Support\Facades\Event::assertDispatched(\App\Events\ChatMessageDeleted::class);
+
+        // When retrieved via index, shows tombstone
+        $listResponse = $this->actingAs($this->peneliti)->getJson(
+            "/api/v1/conversations/{$conversation->id_conversation}/messages"
+        );
+        $listResponse->assertStatus(200);
+        $listResponse->assertJsonPath('data.0.text', 'Pesan telah dihapus');
+        $listResponse->assertJsonPath('data.0.isDeleted', true);
+    }
+
+    public function test_user_cannot_delete_other_user_message_forbidden(): void
+    {
+        $conversation = Conversation::create([
+            'type' => 'direct',
+            'created_by' => $this->analyst->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->analyst->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->peneliti->id_user,
+        ]);
+
+        $message = ChatMessage::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_sender' => $this->analyst->id_user,
+            'message' => 'Pesan penting',
+            'message_type' => 'text',
+        ]);
+
+        // Peneliti attempts to delete analyst's message
+        $response = $this->actingAs($this->peneliti)->deleteJson(
+            "/api/v1/conversations/{$conversation->id_conversation}/messages/{$message->id_message}"
+        );
+
+        $response->assertStatus(403);
+    }
+
+    public function test_peneliti_can_edit_own_message(): void
+    {
+        \Illuminate\Support\Facades\Event::fake([\App\Events\ChatMessageUpdated::class]);
+
+        $conversation = Conversation::create([
+            'type' => 'direct',
+            'created_by' => $this->peneliti->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->peneliti->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->analyst->id_user,
+        ]);
+
+        $message = ChatMessage::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_sender' => $this->peneliti->id_user,
+            'message' => 'Pesan asli peneliti sebelum diedit',
+            'message_type' => 'text',
+        ]);
+
+        $response = $this->actingAs($this->peneliti)->putJson(
+            "/api/v1/conversations/{$conversation->id_conversation}/messages/{$message->id_message}",
+            ['message' => 'Pesan peneliti yang sudah diperbarui']
+        );
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.message', 'Pesan peneliti yang sudah diperbarui');
+        $response->assertJsonPath('data.isEdited', true);
+
+        $this->assertDatabaseHas('messages', [
+            'id_message' => $message->id_message,
+        ]);
+        $rawDb = \Illuminate\Support\Facades\DB::table('messages')->where('id_message', $message->id_message)->value('message');
+        $this->assertNotEquals('Pesan peneliti yang sudah diperbarui', $rawDb);
+        $this->assertEquals('Pesan peneliti yang sudah diperbarui', ChatMessage::find($message->id_message)->message);
+
+        \Illuminate\Support\Facades\Event::assertDispatched(\App\Events\ChatMessageUpdated::class);
+    }
+
+    public function test_peneliti_can_delete_own_message(): void
+    {
+        \Illuminate\Support\Facades\Event::fake([\App\Events\ChatMessageDeleted::class]);
+
+        $conversation = Conversation::create([
+            'type' => 'direct',
+            'created_by' => $this->peneliti->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->peneliti->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->analyst->id_user,
+        ]);
+
+        $message = ChatMessage::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_sender' => $this->peneliti->id_user,
+            'message' => 'Pesan peneliti yang akan dihapus',
+            'message_type' => 'text',
+        ]);
+
+        $response = $this->actingAs($this->peneliti)->deleteJson(
+            "/api/v1/conversations/{$conversation->id_conversation}/messages/{$message->id_message}"
+        );
+
+        $response->assertStatus(200);
+        $this->assertSoftDeleted('messages', ['id_message' => $message->id_message]);
+
+        \Illuminate\Support\Facades\Event::assertDispatched(\App\Events\ChatMessageDeleted::class);
+    }
+
+    public function test_participant_can_download_attachment(): void
+    {
+        Storage::fake('public');
+        $filePath = 'chat-attachments/test/doc.pdf';
+        Storage::disk('public')->put($filePath, 'PDF-CONTENT-TEST');
+
+        $conversation = Conversation::create([
+            'type' => 'direct',
+            'created_by' => $this->peneliti->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->peneliti->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->analyst->id_user,
+        ]);
+
+        $message = ChatMessage::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_sender' => $this->peneliti->id_user,
+            'message' => 'Berkas laporan',
+            'message_type' => 'attachment',
+        ]);
+
+        $attachment = \App\Models\MessageAttachment::create([
+            'id_message' => $message->id_message,
+            'file_name' => 'laporan.pdf',
+            'file_path' => $filePath,
+            'file_size' => 16,
+            'mime_type' => 'application/pdf',
+            'file_type' => 'pdf',
+        ]);
+
+        $response = $this->actingAs($this->analyst)->get(
+            "/api/v1/conversations/{$conversation->id_conversation}/messages/{$message->id_message}/attachments/{$attachment->id_attachment}/download"
+        );
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-disposition');
+    }
+
+    public function test_non_participant_cannot_download_attachment_anti_idor(): void
+    {
+        Storage::fake('public');
+        $filePath = 'chat-attachments/test/secret.pdf';
+        Storage::disk('public')->put($filePath, 'SECRET-PDF-CONTENT');
+
+        $conversation = Conversation::create([
+            'type' => 'direct',
+            'created_by' => $this->peneliti->id_user,
+        ]);
+        ConversationParticipant::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_user' => $this->peneliti->id_user,
+        ]);
+
+        $message = ChatMessage::create([
+            'id_conversation' => $conversation->id_conversation,
+            'id_sender' => $this->peneliti->id_user,
+            'message' => 'Berkas rahasia',
+            'message_type' => 'attachment',
+        ]);
+
+        $attachment = \App\Models\MessageAttachment::create([
+            'id_message' => $message->id_message,
+            'file_name' => 'secret.pdf',
+            'file_path' => $filePath,
+            'file_size' => 18,
+            'mime_type' => 'application/pdf',
+            'file_type' => 'pdf',
+        ]);
+
+        $response = $this->actingAs($this->analyst)->get(
+            "/api/v1/conversations/{$conversation->id_conversation}/messages/{$message->id_message}/attachments/{$attachment->id_attachment}/download"
+        );
+
+        $response->assertStatus(403);
     }
 }

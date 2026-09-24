@@ -15,6 +15,7 @@ class UserResource extends JsonResource
         $role = $this->role;
 
         return [
+            'id' => $this->id_user,
             'id_user' => $this->id_user,
             'id_role' => $this->id_role,
             'nama' => $this->nama,

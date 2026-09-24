@@ -21,14 +21,16 @@ class ChatUserResource extends JsonResource
             if ($diffMinutes <= 3) {
                 $isOnline = true;
                 $lastSeenText = 'Online';
+            } elseif ($diffMinutes < 1) {
+                $lastSeenText = 'Baru saja';
             } elseif ($diffMinutes < 60) {
-                $lastSeenText = "Aktif {$diffMinutes} menit lalu";
-            } elseif ($diffMinutes < 1440) {
-                $hours = (int) ($diffMinutes / 60);
-                $lastSeenText = "Aktif {$hours} jam lalu";
+                $lastSeenText = "{$diffMinutes} menit lalu";
+            } elseif ($lastSeen->isToday()) {
+                $lastSeenText = 'Hari ini pukul ' . $lastSeen->format('H:i');
+            } elseif ($lastSeen->isYesterday()) {
+                $lastSeenText = 'Kemarin pukul ' . $lastSeen->format('H:i');
             } else {
-                $days = (int) ($diffMinutes / 1440);
-                $lastSeenText = "Aktif {$days} hari lalu";
+                $lastSeenText = $lastSeen->format('d M Y \p\u\k\u\l H:i');
             }
         }
 

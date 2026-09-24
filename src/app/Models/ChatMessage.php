@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\SafeEncryptedString;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,8 +24,14 @@ class ChatMessage extends Model
         'id_sender',
         'id_proyek',
         'message',
+        'edited_at',
         'message_type',
         'reply_to_id',
+    ];
+
+    protected $casts = [
+        'message' => SafeEncryptedString::class,
+        'edited_at' => 'datetime',
     ];
 
     public function getRouteKeyName(): string

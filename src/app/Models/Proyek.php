@@ -52,6 +52,20 @@ class Proyek extends Model
         return 'id_proyek';
     }
 
+    /**
+     * Memungkinkan route model binding menggunakan ID integer maupun Kode Proyek string (PRJ-XXX / PKS-XXX).
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        if (is_numeric($value)) {
+            return $this->where('id_proyek', (int) $value)->first()
+                ?? $this->where('kode_proyek', $value)->first();
+        }
+
+        return $this->where('kode_proyek', $value)->first()
+            ?? $this->where('id_proyek', $value)->first();
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');

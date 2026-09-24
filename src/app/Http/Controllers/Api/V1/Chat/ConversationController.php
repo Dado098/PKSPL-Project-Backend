@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Chat;
 
+use App\Events\MessagesRead;
+use App\Events\UserTyping;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Chat\ConversationResource;
 use App\Models\Conversation;
@@ -128,15 +130,50 @@ class ConversationController extends Controller
         $this->authorize('markRead', $conversation);
 
         $currentUser = $request->user();
+        $now = now();
 
         ConversationParticipant::query()
             ->where('id_conversation', $conversation->id_conversation)
             ->where('id_user', $currentUser->id_user)
-            ->update(['last_read_at' => now()]);
+            ->update(['last_read_at' => $now]);
+
+        try {
+            broadcast(new MessagesRead(
+                (int) $conversation->id_conversation,
+                (int) $currentUser->id_user,
+                $now
+            ))->toOthers();
+        } catch (\Throwable $e) {
+            // Non-blocking broadcast
+        }
 
         return response()->json([
             'message' => 'Percakapan berhasil ditandai telah dibaca.',
             'unread_count' => 0,
+        ]);
+    }
+
+    public function typing(Request $request, Conversation $conversation): JsonResponse
+    {
+        $this->authorize('view', $conversation);
+
+        $currentUser = $request->user();
+        $isTyping = $request->boolean('is_typing', true);
+
+        try {
+            broadcast(new UserTyping(
+                (int) $conversation->id_conversation,
+                (int) $currentUser->id_user,
+                $currentUser->nama,
+                $isTyping
+            ))->toOthers();
+        } catch (\Throwable $e) {
+            // Silently catch broadcast error if socket/reverb connection is in test environment
+        }
+
+        return response()->json([
+            'success' => true,
+            'is_typing' => $isTyping,
         ]);
     }
 }
