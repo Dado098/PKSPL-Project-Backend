@@ -188,6 +188,22 @@ class ProyekSeeder extends Seeder
                 'tahun' => 2026,
                 'status' => 'Draft',
             ],
+            [
+                'kode_proyek' => 'PRJ-ANTAM',
+                'nama_proyek' => 'Valuasi Jasa Ekosistem Kawasan Reklamasi PT Antam',
+                'researcher_email' => 'peneliti.antam@pkspl.ipb.ac.id',
+                'desa' => $desaKutuh,
+                'kec' => $kecKutuh,
+                'kab' => $kabKutuh,
+                'tujuan_valuasi' => 'Valuasi ekonomi jasa ekosistem kawasan reklamasi dan tutupan lahan PT Antam Tbk.',
+                'alamat_lengkap' => 'Kawasan Konsesi & Reklamasi PT Antam Tbk, Pomalaa, Kolaka, Sulawesi Tenggara',
+                'latitude' => -4.181200,
+                'longitude' => 121.612500,
+                'luas' => 1540.50,
+                'satuan_luas' => 'Ha',
+                'tahun' => 2026,
+                'status' => 'Proses',
+            ],
         ];
 
         foreach ($proyekList as $data) {

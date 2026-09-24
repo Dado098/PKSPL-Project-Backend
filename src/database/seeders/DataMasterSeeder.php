@@ -12,6 +12,8 @@ class DataMasterSeeder extends Seeder
     {
         $landCovers = DB::table('jenis_tutupan_lahan')
             ->join('indexes', 'indexes.id_index', '=', 'jenis_tutupan_lahan.id_index')
+            ->join('proyek', 'proyek.id_proyek', '=', 'indexes.id_proyek')
+            ->where('proyek.kode_proyek', '!=', 'PRJ-ANTAM')
             ->select('jenis_tutupan_lahan.*', 'indexes.id_proyek')
             ->orderBy('jenis_tutupan_lahan.id_jenis_tutupan_lahan')
             ->get();
