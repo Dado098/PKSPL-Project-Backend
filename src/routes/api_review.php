@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\Review\DatasetSubmissionController;
 use App\Http\Controllers\Api\V1\Review\NotificationController;
 use App\Http\Controllers\Api\V1\Review\ReviewCommentController;
 use App\Http\Controllers\Api\V1\Review\ReviewController;
+use App\Http\Controllers\Api\V1\Review\ReviewStatusNotificationController;
 use Illuminate\Support\Facades\Route;
 
 // ============================================================
@@ -112,3 +113,17 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function (): void {
     // 7.7.1 Menampilkan riwayat aktivitas review.
     Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 });
+
+// ============================================================
+// 7.8 NOTIFIKASI REVIEW & EMAIL STATUS (Mendukung sesi aktif & fallback direct)
+// ============================================================
+Route::prefix('v1')->group(function (): void {
+    // 7.8.1 Memperbarui status review proyek dan mengirim email notifikasi ke Peneliti
+    Route::post('proyek/{proyek}/review-status', [ReviewStatusNotificationController::class, 'updateStatus'])
+        ->name('proyek.review-status');
+
+    // 7.8.2 Mengirim email notifikasi review offline secara langsung
+    Route::post('review/send-offline-email', [ReviewStatusNotificationController::class, 'sendOfflineEmail'])
+        ->name('review.send-offline-email');
+});
+

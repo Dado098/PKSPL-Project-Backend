@@ -20,7 +20,9 @@ class NotificationDispatchService
 {
     public function notifyDatasetSubmitted(Proyek $proyek): void
     {
-        $analysts = User::where('role', Role::ANALYST)->get();
+        $analysts = User::whereHas('role', fn ($q) => $q->where('nama_role', 'ilike', '%analyst%'))
+            ->orWhere('id_role', 2)
+            ->get();
         foreach ($analysts as $analyst) {
             $analyst->notify(new DatasetSubmittedNotification($proyek));
         }
