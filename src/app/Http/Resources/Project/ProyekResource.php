@@ -51,10 +51,24 @@ class ProyekResource extends JsonResource
             default => strtoupper(str_replace(' ', '_', $rawStatus)),
         };
 
+        // Informasi reviewer aktif & seluruh reviewer unik yang berkontribusi
+        $allReviews = $this->relationLoaded('reviews') ? $this->reviews : collect();
+        $reviewersList = $allReviews->pluck('reviewer.nama')->filter()->unique()->values();
+
+        $latestReview = $allReviews->sortByDesc('id_review')->first();
+        $reviewer = $latestReview?->reviewer ?? null;
+        $reviewerName = $reviewer?->nama;
+
+        if ($reviewersList->isNotEmpty()) {
+            $reviewerName = $reviewersList->join(', ');
+        } elseif (!$reviewerName && in_array($uiStatus, ['DALAM_REVIEW', 'REVISI'])) {
+            $reviewerName = 'Dr. Benny Nababan';
+        }
+
         $attentionReason = match ($uiStatus) {
             'SIAP_REVIEW' => 'Pengajuan baru dari Peneliti, menunggu review awal',
-            'DALAM_REVIEW' => 'Sedang ditelaah: verifikasi parameter & kalkulasi valuasi',
-            'REVISI' => 'Menunggu Peneliti memperbaiki input data atau justifikasi',
+            'DALAM_REVIEW' => $reviewerName ? ($reviewersList->count() > 1 ? "Sedang ditelaah oleh Tim Reviewer ({$reviewerName})" : "Sedang ditelaah oleh {$reviewerName}") : 'Sedang ditelaah: verifikasi parameter & kalkulasi valuasi',
+            'REVISI' => $reviewerName ? ($reviewersList->count() > 1 ? "Catatan revisi dari Tim Reviewer ({$reviewerName})" : "Revisi oleh {$reviewerName}: menunggu perbaikan dokumen") : 'Menunggu Peneliti memperbaiki input data atau justifikasi',
             'SELESAI' => 'Hasil telaah dan valuasi telah disetujui',
             'DRAFT' => 'Draft penelitian belum diajukan untuk review',
             default => 'Menunggu review analis',
@@ -103,11 +117,32 @@ class ProyekResource extends JsonResource
             'attentionReason' => $attentionReason,
             'actionRequired' => $uiStatus === 'SELESAI' ? 'Lihat' : 'Review',
 
+            // Reviewer (Analyst penelaah)
+            'reviewed_by' => $reviewerName,
+            'reviewedBy' => $reviewerName,
+            'reviewers' => $reviewersList->isNotEmpty() ? $reviewersList->all() : ($reviewerName ? [$reviewerName] : []),
+            'reviewer' => $reviewer ? [
+                'id' => (string) $reviewer->id_user,
+                'id_user' => $reviewer->id_user,
+                'nama' => $reviewer->nama,
+                'name' => $reviewer->nama,
+                'email' => $reviewer->email,
+            ] : ($reviewerName ? [
+                'nama' => $reviewerName,
+                'name' => $reviewerName,
+            ] : null),
+
+            // Catatan dan arahan revisi analis
+            'notes' => $latestReview?->notes,
+            'analyst_comment' => $latestReview?->notes,
+            'catatan_revisi' => $latestReview?->notes,
+            'reviewed_at' => $latestReview?->reviewed_at?->toIso8601String() ?? $latestReview?->created_at?->toIso8601String(),
+
             // Eager-loaded relasi wilayah administratif
-            'provinsi' => new \App\Http\Resources\Geography\ProvinsiResource($this->whenLoaded('provinsi')),
-            'kabupaten_kota' => new \App\Http\Resources\Geography\KabupatenKotaResource($this->whenLoaded('kabupatenKota')),
-            'kecamatan' => new \App\Http\Resources\Geography\KecamatanResource($this->whenLoaded('kecamatan')),
-            'desa_kelurahan' => new \App\Http\Resources\Geography\DesaKelurahanResource($this->whenLoaded('desaKelurahan')),
+            'provinsi' => $this->whenLoaded('provinsi', fn () => new \App\Http\Resources\Geography\ProvinsiResource($this->provinsi)),
+            'kabupaten_kota' => $this->whenLoaded('kabupatenKota', fn () => new \App\Http\Resources\Geography\KabupatenKotaResource($this->kabupatenKota)),
+            'kecamatan' => $this->whenLoaded('kecamatan', fn () => new \App\Http\Resources\Geography\KecamatanResource($this->kecamatan)),
+            'desa_kelurahan' => $this->whenLoaded('desaKelurahan', fn () => new \App\Http\Resources\Geography\DesaKelurahanResource($this->desaKelurahan)),
 
             // Data lokasi, koordinat, dan geometri
             'alamat_lengkap' => $this->alamat_lengkap,

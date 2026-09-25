@@ -11,6 +11,9 @@ services:
     volumes:
       - ./src:/var/www/html
       - vendor-volume:/var/www/html/vendor
+      - ./docker/php/entrypoint.sh:/usr/local/bin/entrypoint.sh
+    command: ["php-fpm"]
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -28,6 +31,7 @@ services:
     volumes:
       - ./src:/var/www/html
       - vendor-volume:/var/www/html/vendor
+      - ./docker/php/entrypoint.sh:/usr/local/bin/entrypoint.sh
     depends_on:
       app:
         condition: service_started
@@ -49,6 +53,7 @@ services:
     volumes:
       - ./src:/var/www/html
       - vendor-volume:/var/www/html/vendor
+      - ./docker/php/entrypoint.sh:/usr/local/bin/entrypoint.sh
     ports:
       - "8085:8080"
     depends_on:
@@ -57,7 +62,7 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
-    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080", "--debug"]
     networks:
       - pkspl-network
 

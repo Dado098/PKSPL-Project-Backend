@@ -20,6 +20,7 @@ class UserSeeder extends Seeder
         $users = [
             ['admin@gmail.com', 'Administrator PKSPL', Role::ADMIN],
             ['analyst@gmail.com', 'Analyst PKSPL', Role::ANALYST],
+            ['benny.nababan@pkspl.ipb.ac.id', 'Dr. Benny Nababan', Role::ANALYST],
             ['peneliti@gmail.com', 'Bima Saputra', Role::PENELITI],
             ['demo.retno@pkspl.ipb.ac.id', 'Dr. Ir. Retno Wulandari, M.Si.', Role::PENELITI],
             ['demo.fauzi@pkspl.ipb.ac.id', 'Dr. Ahmad Fauzi, S.Kel., M.Sc.', Role::PENELITI],

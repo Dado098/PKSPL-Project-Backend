@@ -113,7 +113,7 @@ class ProyekRequest extends FormRequest
             // Metadata pendukung dan status
             'tahun' => ['nullable', 'integer'],
             'deskripsi' => ['nullable', 'string'],
-            'status' => ['nullable', Rule::in(['Draft', 'Proses', 'Selesai', 'Dibatalkan'])],
+            'status' => ['nullable', Rule::in(['Draft', 'Proses', 'Submitted', 'Dalam Review', 'Need Revision', 'Selesai', 'Approved', 'Dibatalkan'])],
         ];
     }
 }

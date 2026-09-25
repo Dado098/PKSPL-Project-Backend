@@ -16,8 +16,8 @@ else
     echo "[entrypoint] Vendor dependencies ready."
 fi
 
-# Set permissions (previously in docker-compose command)
-chmod -R 0777 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+# Set permissions quickly without heavy recursive traversals on Windows mounts
+chmod 0777 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
 # Execute the main command (php-fpm, queue:work, etc.)
 exec "$@"

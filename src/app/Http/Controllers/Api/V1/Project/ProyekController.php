@@ -52,6 +52,7 @@ class ProyekController extends ApiResourceController
                 'kabupatenKota',
                 'kecamatan',
                 'desaKelurahan',
+                'reviews.reviewer',
             ]);
 
         // Peneliti hanya dapat melihat proyek yang dimilikinya sendiri.
@@ -190,6 +191,7 @@ class ProyekController extends ApiResourceController
             'kabupatenKota',
             'kecamatan',
             'desaKelurahan',
+            'reviews.reviewer',
         ]);
 
         return $this->showResource($proyek);

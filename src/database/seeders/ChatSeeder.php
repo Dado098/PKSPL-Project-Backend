@@ -70,6 +70,28 @@ class ChatSeeder extends Seeder
             ]
         );
 
+        // A.2 Analyst Dr. Benny Nababan
+        $analystBenny = User::firstOrCreate(
+            ['email' => 'benny.nababan@pkspl.ipb.ac.id'],
+            [
+                'nama' => 'Dr. Benny Nababan',
+                'id_role' => $roleAnalyst->id_role,
+                'password' => Hash::make('password'),
+                'status' => 'Aktif',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        NotificationPreference::firstOrCreate(
+            ['id_user' => $analystBenny->id_user],
+            [
+                'email_chat' => true,
+                'email_revision' => true,
+                'email_status_review' => true,
+                'app_notification' => true,
+            ]
+        );
+
         // B. Admin
         $admin = User::firstOrCreate(
             ['email' => 'admin@gmail.com'],
