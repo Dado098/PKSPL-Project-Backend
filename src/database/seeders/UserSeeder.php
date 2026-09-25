@@ -27,6 +27,10 @@ class UserSeeder extends Seeder
             ['demo.wayan@pkspl.ipb.ac.id', 'Prof. Dr. Wayan Sudarma, M.Env.', Role::PENELITI],
             ['demo.siti@pkspl.ipb.ac.id', 'Dr. Siti Nurhaliza, M.Si.', Role::PENELITI],
             ['demo.hendra@pkspl.ipb.ac.id', 'Dr. Hendra Gunawan, S.Kel., M.Si.', Role::PENELITI],
+            ['peneliti.antam@pkspl.ipb.ac.id', 'Peneliti PT Antam (Tbk)', Role::PENELITI],
+            ['analyst.antam@pkspl.ipb.ac.id', 'Analyst PT Antam (Tbk)', Role::ANALYST],
+            ['peneliti@antam.com', 'Peneliti Reklamasi Antam', Role::PENELITI],
+            ['analyst@antam.com', 'Analyst Valuasi Antam', Role::ANALYST],
             ['guest@gmail.com', 'Tamu PKSPL', Role::GUEST],
         ];
 
