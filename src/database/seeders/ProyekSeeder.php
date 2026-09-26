@@ -232,6 +232,8 @@ class ProyekSeeder extends Seeder
                     'tahun' => $data['tahun'],
                     'deskripsi' => 'Data proyek valuasi ekonomi pesisir dan kelautan untuk analisis PKSPL IPB University.',
                     'status' => $data['status'],
+                    'created_at' => $data['created_at'] ?? now(),
+                    'updated_at' => $data['updated_at'] ?? now(),
                 ]
             );
         }

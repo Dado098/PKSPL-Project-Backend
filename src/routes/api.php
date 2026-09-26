@@ -30,6 +30,8 @@ use App\Http\Controllers\Api\V1\AI\AIController;
 use App\Http\Controllers\Api\V1\Valuation\ValidasiAnalystController;
 use App\Http\Controllers\Api\V1\User\ProfileController;
 use App\Http\Controllers\Api\V1\Project\StatisticsController;
+use App\Http\Controllers\Api\V1\Admin\AdminActivityLogController;
+use App\Http\Controllers\Api\V1\Admin\AdminAnalyticsController;
 use Illuminate\Support\Facades\Route;
 
 // ============================================================
@@ -37,8 +39,20 @@ use Illuminate\Support\Facades\Route;
 // Seluruh endpoint dalam bab ini menggunakan prefiks v1.
 // ============================================================
 Route::prefix('v1')->group(function (): void {
-    // Landing Page statistics endpoint
+    // Landing Page statistics & public project activity endpoints
     Route::get('statistics', [StatisticsController::class, 'index']);
+    Route::get('public/projects/statistics', [StatisticsController::class, 'index']);
+    Route::get('public/projects/activity', [StatisticsController::class, 'activity']);
+
+    // Admin Activity and Audit Logs endpoint
+    Route::get('admin/activity-logs', [AdminActivityLogController::class, 'index']);
+    Route::post('admin/activity-logs', [AdminActivityLogController::class, 'store']);
+
+    // Admin Analytics Overview endpoint (Dynamic Tren Valuasi & Riset)
+    Route::get('admin/analytics/overview', [AdminAnalyticsController::class, 'overview']);
+
+    // Landing Page public map projects endpoint
+    Route::get('public/projects/map', [ProyekController::class, 'publicMap']);
     // ------------------------------------------------------------
     // 1.1 AUTENTIKASI
     // Menangani pendaftaran, sesi pengguna, dan integrasi Google.
