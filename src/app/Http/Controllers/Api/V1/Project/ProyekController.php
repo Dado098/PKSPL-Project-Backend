@@ -104,7 +104,24 @@ class ProyekController extends ApiResourceController
     public function publicMap(): JsonResponse
     {
         $projects = Proyek::query()
-            ->with(['provinsi', 'kabupatenKota'])
+            ->select([
+                'id_proyek',
+                'kode_proyek',
+                'nama_proyek',
+                'latitude',
+                'longitude',
+                'luas',
+                'satuan_luas',
+                'status',
+                'deskripsi',
+                'tujuan_valuasi',
+                'id_provinsi',
+                'id_kabupaten_kota',
+            ])
+            ->with([
+                'provinsi:id_provinsi,nama_provinsi',
+                'kabupatenKota:id_kabupaten_kota,nama_kabupaten_kota',
+            ])
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->orderBy('id_proyek', 'asc')

@@ -24,7 +24,11 @@ class AdminActivityLogController extends Controller
             $this->seedRealisticActivityLogs();
         }
 
-        $query = ActivityLog::with(['user.role', 'proyek'])->latest('created_at');
+        $query = ActivityLog::with([
+            'user:id_user,nama,email,id_role',
+            'user.role:id_role,nama_role',
+            'proyek:id_proyek,kode_proyek,nama_proyek'
+        ])->latest('created_at');
 
         // 1. Filter Search Query
         if ($request->filled('search')) {

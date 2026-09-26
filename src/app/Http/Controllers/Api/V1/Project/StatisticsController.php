@@ -39,18 +39,22 @@ class StatisticsController extends Controller
             'Dibatalkan' => 0,
         ], $rawStatuses);
 
-        // 4. Grafik Per Bulan (Tahun Berjalan)
+        // 4. Grafik Per Bulan (Tahun Berjalan) - 1 Agregasi PostgreSQL tunggal
         $currentYear = (int) date('Y');
         $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         $monthlyProjects = [];
 
-        // Hitung data riil pembuatan proyek per bulan di database untuk tahun berjalan
+        // Hitung data riil pembuatan proyek per bulan di database untuk tahun berjalan secara agregat
+        $monthlyCounts = Proyek::query()
+            ->whereYear('created_at', $currentYear)
+            ->selectRaw('EXTRACT(MONTH FROM created_at)::int as m, count(*) as count')
+            ->groupBy('m')
+            ->pluck('count', 'm')
+            ->toArray();
+
         for ($m = 1; $m <= 12; $m++) {
             $label = $monthNames[$m - 1];
-            $count = Proyek::query()
-                ->whereYear('created_at', $currentYear)
-                ->whereMonth('created_at', $m)
-                ->count();
+            $count = (int) ($monthlyCounts[$m] ?? 0);
 
             $monthlyProjects[] = [
                 'month' => $label,
@@ -78,14 +82,15 @@ class StatisticsController extends Controller
         // 6. Total Luas Kawasan (Hektare) dari seluruh proyek
         $totalAreaHa = (float) (Proyek::query()->sum('luas') ?: 7422.4);
 
-        // 7. Pengguna Terdaftar Berdasarkan Role
-        $allUsers = User::with('role')->get();
-        $totalUsers = $allUsers->count();
-        $usersByRole = [];
-        foreach ($allUsers as $u) {
-            $rName = $u->role?->nama_role ?? 'Guest';
-            $usersByRole[$rName] = ($usersByRole[$rName] ?? 0) + 1;
-        }
+        // 7. Pengguna Terdaftar Berdasarkan Role - Agregasi database langsung via GROUP BY
+        $totalUsers = User::query()->count();
+        $usersByRole = DB::table('users')
+            ->leftJoin('roles', 'users.id_role', '=', 'roles.id_role')
+            ->selectRaw("COALESCE(roles.nama_role, 'Guest') as role, count(*) as count")
+            ->groupBy('roles.nama_role')
+            ->pluck('count', 'role')
+            ->map(fn ($c) => (int) $c)
+            ->toArray();
 
         // 8. Hitung Akumulasi TEV Nasional dari daftar proyek
         $allProjects = Proyek::query()->get(['id_proyek', 'kode_proyek', 'nama_proyek', 'luas', 'status', 'tahun', 'created_at', 'updated_at']);
