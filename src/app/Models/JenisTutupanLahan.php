@@ -53,4 +53,22 @@ class JenisTutupanLahan extends Model
     {
         return $this->hasMany(HasilValuasi::class, 'id_jenis_tutupan_lahan', 'id_jenis_tutupan_lahan');
     }
+
+    /** Konfigurasi service valuasi per jenis tutupan lahan. */
+    public function areaServiceConfigs(): HasMany
+    {
+        return $this->hasMany(AreaServiceConfig::class, 'id_jenis_tutupan_lahan', 'id_jenis_tutupan_lahan');
+    }
+
+    /** Baris data valuasi per jenis tutupan lahan. */
+    public function valuationRows(): HasMany
+    {
+        return $this->hasMany(ValuationRow::class, 'id_jenis_tutupan_lahan', 'id_jenis_tutupan_lahan');
+    }
+
+    /** Kolom custom valuasi per jenis tutupan lahan. */
+    public function valuationCustomColumns(): HasMany
+    {
+        return $this->hasMany(ValuationCustomColumn::class, 'id_jenis_tutupan_lahan', 'id_jenis_tutupan_lahan');
+    }
 }
